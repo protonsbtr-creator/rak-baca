@@ -1,0 +1,1831 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Rak Baca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400;1,7..72,600&display=swap">
+<style>
+/* Layout: quiet monochrome. A header row, then a grid of book covers like a shelf; the reader is a soft grey room with one white page. */
+:root {
+  --bg: #FFFFFF;
+  --surface: #F6F6F6;
+  --ink: #141414;
+  --muted: #7A7A7A;
+  --faint: #A8A8A8;
+  --line: #E6E6E6;
+  --accent: #141414;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #F1F1F1;
+  --danger: #C4372F;
+  --desk: #EDEDED;
+  --desk-2: #F4F4F4;
+  --desk-ink: #1A1A1A;
+  --desk-muted: #8A8A8A;
+  --desk-hover: rgba(0, 0, 0, .06);
+  --page-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 12px 32px rgba(0, 0, 0, .10);
+  --cover-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 8px 20px rgba(0, 0, 0, .08);
+  --paper: #FFFFFF;
+  --paper-back: #F3F3F3;
+  --shade: rgba(0, 0, 0, 0.14);
+  --wall-top: #FFFFFF; --wall: #EFEFEF; --floor-far: #E4E4E4; --floor-near: #F7F7F7; --grid: rgba(0, 0, 0, .06); --dust: 90, 90, 90; --floor-shadow: 0, 0, 0;
+  --f-body: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111111; --surface: #1A1A1A; --ink: #EDEDED; --muted: #8E8E8E; --faint: #5E5E5E; --line: #262626;
+    --accent: #EDEDED; --accent-ink: #111111; --accent-soft: #1F1F1F; --danger: #EF6F67;
+    --desk: #161616; --desk-2: #1C1C1C; --desk-ink: #E6E6E6; --desk-muted: #8A8A8A; --desk-hover: rgba(255, 255, 255, .07);
+    --page-shadow: 0 12px 36px rgba(0, 0, 0, .5); --cover-shadow: 0 8px 22px rgba(0, 0, 0, .45);
+    --paper-back: #EAEAEA; --shade: rgba(0, 0, 0, 0.4);
+    --wall-top: #262626; --wall: #151515; --floor-far: #1D1D1D; --floor-near: #0E0E0E; --grid: rgba(255, 255, 255, .05); --dust: 200, 200, 200; --floor-shadow: 0, 0, 0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111111; --surface: #1A1A1A; --ink: #EDEDED; --muted: #8E8E8E; --faint: #5E5E5E; --line: #262626;
+  --accent: #EDEDED; --accent-ink: #111111; --accent-soft: #1F1F1F; --danger: #EF6F67;
+  --desk: #161616; --desk-2: #1C1C1C; --desk-ink: #E6E6E6; --desk-muted: #8A8A8A; --desk-hover: rgba(255, 255, 255, .07);
+  --page-shadow: 0 12px 36px rgba(0, 0, 0, .5); --cover-shadow: 0 8px 22px rgba(0, 0, 0, .45);
+  --paper-back: #EAEAEA; --shade: rgba(0, 0, 0, 0.4);
+    --wall-top: #262626; --wall: #151515; --floor-far: #1D1D1D; --floor-near: #0E0E0E; --grid: rgba(255, 255, 255, .05); --dust: 200, 200, 200; --floor-shadow: 0, 0, 0;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+html, body { height: 100%; overflow-x: clip; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input, label { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* ---------- Library ---------- */
+#library { max-width: 1040px; margin: 0 auto; padding-inline: 24px; padding-block: calc(28px + env(safe-area-inset-top, 0px)) calc(64px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 36px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand h1 { margin: 0; font-weight: 600; font-size: 20px; letter-spacing: -0.02em; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.tools { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+.chip[data-s="ok"]::before { background: #3BA55C; }
+.chip[data-s="err"]::before { background: var(--danger); }
+
+.who { color: var(--muted); font-size: 13px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 14px 24px; align-items: center; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.auth-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.auth-copy strong { font-weight: 500; font-size: 15px; }
+.auth-copy span { color: var(--muted); font-size: 13.5px; }
+.auth-fields { display: flex; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.auth input { flex: 1 1 150px; min-width: 0; min-height: 38px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 14px; }
+.auth-switch { grid-column: 1 / -1; margin: 0; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.link { border: 0; background: none; padding: 0; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 13px; }
+@media (max-width: 560px) { .auth { grid-template-columns: 1fr; } }
+.say { margin: -20px 0 0; font-size: 13px; color: var(--muted); }
+.say[data-k="err"] { color: var(--danger); }
+.say[data-k="busy"]::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; vertical-align: -1px; border: 1.5px solid var(--line); border-top-color: var(--ink); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid transparent; cursor: pointer; font-weight: 500; font-size: 14px; white-space: nowrap; transition: opacity .15s, background .15s; }
+.btn svg { width: 15px; height: 15px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { opacity: .85; }
+.btn.ghost { background: transparent; color: var(--muted); border-color: var(--line); }
+.btn.ghost:hover { color: var(--ink); }
+.btn.danger { background: var(--danger); color: #FFFFFF; }
+.btn.sm { min-height: 30px; padding: 0 12px; font-size: 13px; }
+
+.shelfhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.shelfhead h2 { margin: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+#count { font-family: var(--f-mono); font-size: 12px; color: var(--faint); }
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 40px 20px; padding-top: 8px; }
+.item { --w: min(124px, 33vw); display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 0; }
+
+/* A floating 3D book: a CSS box (cover, spine, page block, top, back) tilted to show its spine, bobbing on a loop. */
+.b3 { --h: calc(var(--w) * 1.42); --t: 20px; --spine: #2B2B2B; --spine-ink: #FFFFFF; position: relative; width: var(--w); height: var(--h); margin-block: 10px 22px; padding: 0; border: 0; background: none; cursor: pointer; perspective: 900px; animation: arrive .9s cubic-bezier(.2, .9, .25, 1.15) both; animation-delay: var(--in, 0s); }
+.b3:focus-visible { outline: none; }
+.b3 .float { position: absolute; inset: 0; transform-style: preserve-3d; animation: bob var(--dur, 6s) ease-in-out var(--phase, 0s) infinite; }
+.b3 .body { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(5deg) rotateY(var(--tilt, 28deg)); transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.b3:hover .body, .b3:focus-visible .body { transform: rotateX(0deg) rotateY(8deg) translateZ(22px); }
+.b3 .f { position: absolute; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.b3 .front { inset: 0; transform: translateZ(calc(var(--t) / 2)); border-radius: 1px 3px 3px 1px; overflow: hidden; background: var(--surface); }
+.b3 .front img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.b3 .front::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, rgba(0, 0, 0, .18), rgba(255, 255, 255, .08) 4%, transparent 9%), linear-gradient(115deg, rgba(255, 255, 255, .22), transparent 40%); }
+.b3 .ph { display: grid; place-items: center; width: 100%; height: 100%; padding: 12px; font-size: 13px; font-weight: 500; color: var(--muted); background: var(--surface); text-align: center; }
+.b3 .prog { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--ink); z-index: 1; }
+.b3 .back { inset: 0; transform: rotateY(180deg) translateZ(calc(var(--t) / 2)); background: var(--spine); border-radius: 3px 1px 1px 3px; }
+.b3 .spine { top: 0; left: calc(50% - var(--t) / 2); width: var(--t); height: 100%; transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); background: linear-gradient(to right, rgba(0, 0, 0, .25), rgba(255, 255, 255, .10) 45%, rgba(0, 0, 0, .18)), var(--spine); color: var(--spine-ink); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.b3 .spine span { writing-mode: vertical-rl; font-size: 9.5px; font-weight: 500; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 86%; opacity: .9; }
+.b3 .pages { top: 2px; left: calc(50% - var(--t) / 2 + 1px); width: calc(var(--t) - 2px); height: calc(100% - 4px); transform: rotateY(90deg) translateZ(calc(var(--w) / 2 - 3px)); background: repeating-linear-gradient(to right, #F7F7F7 0 1px, #DADADA 1px 2px); }
+.b3 .top { left: 0; top: calc(50% - var(--t) / 2 + 1px); width: calc(100% - 3px); height: calc(var(--t) - 2px); transform: rotateX(90deg) translateZ(calc(var(--h) / 2 - 2px)); background: repeating-linear-gradient(#F7F7F7 0 1px, #DCDCDC 1px 2px); }
+.b3 .shadow { position: absolute; left: 8%; right: 8%; bottom: -26px; height: 14px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, .22), transparent); animation: shadow var(--dur, 6s) ease-in-out var(--phase, 0s) infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotateZ(0deg); } 50% { transform: translateY(-12px) rotateZ(-1.2deg); } }
+@keyframes shadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.8); opacity: .55; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(-70px) rotate(-6deg) scale(.9); } to { opacity: 1; transform: none; } }
+.b3.seen { animation: none; }
+.info { display: flex; flex-direction: column; gap: 3px; min-width: 0; width: calc(var(--w) + 24px); }
+.info h3 { margin: 0; font-weight: 500; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sub { margin: 0; color: var(--muted); font-size: 12.5px; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.where { margin: 0; color: var(--faint); font-size: 12.5px; }
+.del { display: inline-grid; place-items: center; width: 28px; height: 28px; margin: -4px -6px -4px 0; border: 0; border-radius: 50%; background: transparent; color: var(--faint); cursor: pointer; flex: none; }
+.del:hover { color: var(--ink); background: var(--surface); }
+.del svg { width: 15px; height: 15px; }
+.confirm { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.confirm p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.row { display: flex; gap: 6px; flex-wrap: wrap; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 56px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; cursor: pointer; }
+.empty strong { color: var(--ink); font-weight: 500; font-size: 16px; }
+.empty span { max-width: 42ch; font-size: 14px; }
+.loadingShelf { color: var(--faint); font-size: 14px; }
+.dropzone { position: fixed; inset: 12px; z-index: 20; display: grid; place-items: center; border: 1.5px dashed var(--ink); border-radius: 16px; background: color-mix(in srgb, var(--bg) 88%, transparent); font-size: 16px; font-weight: 500; pointer-events: none; }
+
+/* ---------- Reader ---------- */
+#reader { position: fixed; inset: 0; z-index: 10; background: var(--desk); color: var(--desk-ink); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.rbar { position: relative; z-index: 3; display: flex; align-items: center; gap: 10px; padding: 8px 12px; transition: opacity .2s, transform .2s; }
+.rbar.bottom { gap: 12px; padding-bottom: 12px; }
+#reader.calm .rbar { opacity: 0; pointer-events: none; }
+#reader.calm .rbar.topbar { transform: translateY(-8px); }
+#reader.calm .rbar.bottom { transform: translateY(8px); }
+.ibtn { display: inline-grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 50%; border: 0; background: transparent; color: var(--desk-ink); cursor: pointer; }
+.ibtn:hover { background: var(--desk-hover); }
+.ibtn:disabled { opacity: .25; cursor: default; background: transparent; }
+.ibtn svg { width: 20px; height: 20px; }
+.rtitle { flex: 1; min-width: 0; font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pageno { font-family: var(--f-mono); font-size: 12.5px; color: var(--desk-muted); font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 7ch; text-align: right; }
+#slider { flex: 1; min-width: 0; accent-color: var(--desk-ink); height: 28px; }
+
+#stage { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+#stage:active { cursor: grabbing; }
+#book { position: absolute; background: var(--paper); box-shadow: var(--page-shadow); }
+#book canvas { display: block; width: 100%; height: 100%; }
+#fx { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+
+.rload { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--desk-muted); font-size: 14px; }
+.rload[data-err] { color: var(--desk-ink); }
+.toast { position: absolute; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 12px; max-width: calc(100% - 32px); padding: 8px 8px 8px 16px; border-radius: 999px; background: var(--bg); color: var(--ink); box-shadow: 0 8px 28px rgba(0, 0, 0, .16); font-size: 13.5px; }
+.toast .btn { min-height: 32px; }
+.edgehint { animation: nudge .35s ease; }
+@keyframes nudge { 30% { transform: translateX(-10px); } 70% { transform: translateX(6px); } }
+
+@media (max-width: 560px) {
+  #library { padding-inline: 16px; padding-block: 20px 48px; gap: 28px; }
+  #library #space { --w: 84px; }
+  .brand p { display: none; }
+  .sheet-card { grid-template-columns: 64px minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rbar, .btn { transition: none; }
+  .sheet-card { animation: none; }
+}
+
+/* ---------- weightless scene ---------- */
+/* The room: a softly lit back wall, a floor with a perspective grid fading into the horizon, drifting dust. */
+#room { position: relative; width: 100vw; margin-inline: calc(50% - 50vw); overflow: hidden; background: var(--wall); }
+#libbg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#dust { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.fs { position: absolute; left: 0; top: 0; height: 22px; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--floor-shadow), .55), rgba(var(--floor-shadow), 0)); pointer-events: none; will-change: transform, opacity; opacity: 0; }
+#space { --w: 112px; position: relative; max-width: 1100px; margin-inline: auto; perspective: 1500px; perspective-origin: 50% 40%; transition: height .6s ease; }
+#space .b3 { touch-action: none; cursor: grab; position: absolute; left: 0; top: 0; margin: 0; perspective: none; transform-style: preserve-3d; animation: none; will-change: transform, opacity; opacity: 0; }
+#space .b3 .body { transform: none; transition: none; }
+.b3 .cap { position: absolute; left: 50%; top: calc(100% + 16px); transform: translateX(-50%); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--muted); opacity: 0; transition: opacity .2s; pointer-events: none; }
+.b3:hover .cap { opacity: 1; }
+.gesture { margin: 14px 0 0; text-align: center; font-size: 12.5px; color: var(--faint); }
+
+.sheet { position: fixed; inset: 0; z-index: 15; display: flex; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+.sheet-card { position: relative; display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 16px; width: min(460px, 100%); padding: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 24px 64px rgba(0, 0, 0, .14); animation: rise .35s cubic-bezier(.2, .8, .2, 1); }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+.sheet-cover { aspect-ratio: 0.7; border-radius: 3px; overflow: hidden; background: var(--surface); box-shadow: var(--cover-shadow); align-self: start; }
+.sheet-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sheet-cover .ph { display: grid; place-items: center; height: 100%; padding: 6px; font-size: 11px; color: var(--muted); text-align: center; }
+.sheet-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding-right: 26px; }
+.sheet-info h3 { margin: 0; font-weight: 500; font-size: 16px; line-height: 1.3; overflow-wrap: anywhere; }
+.sheet .bar { height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin-block: 2px; }
+.sheet .bar span { display: block; height: 100%; background: var(--ink); }
+.sheet .row { margin-top: 6px; }
+.sheet .close { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border: 0; border-radius: 50%; background: transparent; color: var(--faint); cursor: pointer; font-size: 18px; line-height: 1; }
+.sheet .close:hover { background: var(--surface); color: var(--ink); }
+</style>
+</head>
+<body>
+
+
+<div id="library">
+  <header class="top">
+    <div class="brand">
+      <h1>Rak Baca</h1>
+      <p>Lanjut dari halaman terakhir, di HP maupun laptop.</p>
+    </div>
+    <div class="tools">
+      <span id="sync" class="chip" data-s="wait">Menghubungkan…</span>
+      <span id="account" class="who" hidden></span>
+      <button class="btn ghost sm" id="logout" hidden>Keluar</button>
+      <label class="btn primary" for="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Unggah buku</label>
+      <input type="file" id="file" accept="application/pdf,.pdf,application/epub+zip,.epub" hidden>
+    </div>
+  </header>
+  <form id="auth" class="auth" hidden>
+    <div class="auth-copy">
+      <strong>Masuk untuk sinkron</strong>
+      <span>Buku dan halaman terakhirmu tersimpan di akun, jadi HP dan laptop selalu nyambung.</span>
+    </div>
+    <div class="auth-fields">
+      <input id="email" type="email" autocomplete="email" placeholder="Email" required>
+      <input id="password" type="password" autocomplete="current-password" placeholder="Kata sandi" minlength="6" required>
+      <button class="btn primary" id="authGo" type="submit">Masuk</button>
+    </div>
+    <p class="auth-switch"><span id="authMsg" aria-live="polite"></span><button type="button" class="link" id="authMode">Belum punya akun? Daftar</button></p>
+  </form>
+  <p id="say" class="say" hidden></p>
+
+  <section>
+    <div class="shelfhead"><h2>Rak kamu</h2><div class="tools"><button class="btn ghost sm" id="tidy" hidden>Rapikan</button><span id="count"></span></div></div>
+    <div id="room" hidden>
+      <canvas id="libbg"></canvas>
+      <canvas id="dust"></canvas>
+      <div id="space"></div>
+    </div>
+    <p class="gesture" id="gesture" hidden></p>
+    <p id="loadingShelf" class="loadingShelf">Memuat rak…</p>
+    <label id="empty" class="empty" for="file" hidden>
+      <strong>Rak masih kosong</strong>
+      <span id="hint">Ketuk untuk mengunggah PDF atau EPUB, atau tarik file ke sini. Maksimal 50 MB per file.</span>
+    </label>
+  </section>
+  <div id="drop" class="dropzone" hidden>Lepas untuk menaruh di rak</div>
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-labelledby="shTitle">
+      <div class="sheet-cover" id="shCover"></div>
+      <div class="sheet-info">
+        <h3 id="shTitle"></h3>
+        <p class="sub" id="shSub"></p>
+        <div class="bar"><span id="shBar"></span></div>
+        <p class="where" id="shWhere"></p>
+        <div class="row" id="shActs">
+          <button class="btn primary sm" id="shRead">Mulai baca</button>
+          <button class="btn ghost sm" id="shDel">Hapus</button>
+        </div>
+        <div class="confirm" id="shConfirm" hidden>
+          <p id="shConfirmText"></p>
+          <div class="row">
+            <button class="btn danger sm" id="shYes">Hapus</button>
+            <button class="btn ghost sm" id="shNo">Batal</button>
+          </div>
+        </div>
+      </div>
+      <button class="close" id="shClose" aria-label="Tutup">×</button>
+    </div>
+  </div>
+</div>
+
+<div id="reader" hidden>
+  <div class="rbar topbar">
+    <button class="ibtn" id="back" aria-label="Kembali ke rak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="rtitle" id="rTitle"></div>
+  </div>
+  <div id="stage">
+    <div id="book"><canvas id="cR"></canvas></div>
+    <canvas id="fx" hidden></canvas>
+    <div class="rload" id="rload" hidden></div>
+  </div>
+  <div class="rbar bottom">
+    <button class="ibtn" id="prev" aria-label="Halaman sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <input type="range" id="slider" min="1" max="1" value="1" aria-label="Pindah ke halaman">
+    <span class="pageno" id="pageno">–</span>
+    <button class="ibtn" id="next" aria-label="Halaman berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <div class="toast" id="toast" hidden><span id="toastText"></span><button class="btn primary" id="toastBtn"></button></div>
+</div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const MAX_BYTES = 50 * 1024 * 1024; // Supabase free plan: 50 MB per file
+  const coarse = matchMedia("(pointer: coarse)").matches;
+  const DEVICE = coarse ? (Math.min(screen.width, screen.height) < 700 ? "HP" : "tablet") : "laptop";
+  const SESSION = Math.random().toString(36).slice(2);
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // pdf.js parses PDFs in a real Web Worker shipped with the app.
+  const pdfjs = window.pdfjsLib || window["pdfjs-dist/build/pdf"] || null;
+  if (pdfjs) pdfjs.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
+  const openPdf = (bytes) => pdfjs.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
+
+  // ---------- small helpers ----------
+  const lsGet = (k) => { try { const v = localStorage.getItem("rakbaca:" + k); return v ? JSON.parse(v) : null; } catch { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem("rakbaca:" + k, JSON.stringify(v)); } catch {} };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const fmtMB = (b) => (b / 1048576).toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " MB";
+  const rtf = new Intl.RelativeTimeFormat("id", { numeric: "auto" });
+  function rel(t) {
+    const s = (t - Date.now()) / 1000, a = Math.abs(s);
+    if (a < 60) return "baru saja";
+    if (a < 3600) return rtf.format(Math.round(s / 60), "minute");
+    if (a < 86400) return rtf.format(Math.round(s / 3600), "hour");
+    if (a < 86400 * 30) return rtf.format(Math.round(s / 86400), "day");
+    return new Date(t).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  }
+  function h(tag, attrs = {}, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(c));
+    return el;
+  }
+  const cleanTitle = (name) => name.replace(/\.pdf$/i, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim() || "Tanpa judul";
+
+  // IndexedDB cache of downloaded PDFs, so reopening a book doesn't redownload it.
+  const idb = (() => {
+    let p;
+    const open = () => p || (p = new Promise((res, rej) => {
+      try { const r = indexedDB.open("rakbaca", 1); r.onupgradeneeded = () => r.result.createObjectStore("pdf"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }
+      catch (e) { rej(e); }
+    }));
+    const tx = async (mode, fn) => { try { const d = await open(); return await new Promise((res) => { const t = d.transaction("pdf", mode); const q = fn(t.objectStore("pdf")); t.oncomplete = () => res(q && q.result); t.onerror = t.onabort = () => res(null); }); } catch { return null; } };
+    return {
+      get: (k) => tx("readonly", (s) => s.get(k)).then((v) => v || null),
+      put: (k, v) => tx("readwrite", (s) => s.put(v, k)),
+      del: (k) => tx("readwrite", (s) => s.delete(k)),
+    };
+  })();
+  const memBytes = new Map();
+  function remember(key, bytes) { memBytes.delete(key); memBytes.set(key, bytes); while (memBytes.size > 3) memBytes.delete(memBytes.keys().next().value); }
+
+  // ---------- state ----------
+  let db = null, assets = null, user = null, uid = null, libReady = false;
+  let books = new Map();        // shared library: id -> {title, fileId, coverId, pages, sizeBytes, addedAt}
+  let progress = new Map();     // this viewer's progress: id -> {page, total, updatedAt, device, session}
+  const localBooks = new Map(); // opened without syncing (no account in this view)
+
+  function setSync(s) {
+    const el = $("#sync"); el.dataset.s = s;
+    el.textContent = { ok: "Tersinkron", local: "Belum masuk", offline: "Offline · memakai salinan terakhir", err: "Gagal menyimpan, dicoba lagi saat pindah halaman", wait: "Menghubungkan…" }[s];
+  }
+  function say(kind, text) {
+    const el = $("#say");
+    if (!text) { el.hidden = true; return; }
+    el.hidden = false; el.dataset.k = kind; el.textContent = text;
+  }
+
+  // ---------- cloud (Supabase) ----------
+  // Books, covers and reading progress live in the reader's own Supabase project (see supabase/setup.sql).
+  // Files sit in the private "books" bucket under <user id>/<book id>/; row-level security keeps each account to itself.
+  const CFG = window.RAKBACA_CONFIG || {};
+  const sb = CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase
+    ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true } })
+    : null;
+  const rowToBook = (r) => ({ kind: r.kind, title: r.title, author: r.author || "", fileId: r.file_path, coverId: r.cover_path, pages: r.pages, sizeBytes: r.size_bytes, addedAt: r.added_at, addedFrom: r.added_from });
+  const rowToProg = (r) => ({ page: r.page, total: r.total, loc: r.loc || undefined, device: r.device, session: r.session, updatedAt: r.updated_at });
+  const coverUrls = new Map();
+  const cloud = {
+    async loadBooks() {
+      const { data, error } = await sb.from("books").select("*").order("added_at");
+      if (error) throw error;
+      const m = new Map(data.map((r) => [r.id, rowToBook(r)]));
+      for (const b of m.values()) b.coverUrl = coverUrls.get(b.coverId) || null;
+      return m;
+    },
+    async loadProgress() {
+      const { data, error } = await sb.from("progress").select("*");
+      if (error) throw error;
+      return new Map(data.map((r) => [r.book_id, rowToProg(r)]));
+    },
+    async addBook(meta, fileBlob, fileType, coverBlob) {
+      const id = crypto.randomUUID(), base = `${uid}/${id}/`;
+      const filePath = base + (meta.kind === "epub" ? "book.json" : "book.pdf");
+      let r = await sb.storage.from("books").upload(filePath, fileBlob, { contentType: fileType, upsert: false });
+      if (r.error) throw r.error;
+      let coverPath = null;
+      if (coverBlob) {
+        r = await sb.storage.from("books").upload(base + "cover.jpg", coverBlob, { contentType: "image/jpeg" });
+        if (!r.error) coverPath = base + "cover.jpg";
+      }
+      const row = { id, user_id: uid, kind: meta.kind, title: meta.title, author: meta.author || null, file_path: filePath, cover_path: coverPath, pages: meta.pages, size_bytes: meta.sizeBytes, added_at: Date.now(), added_from: DEVICE };
+      const ins = await sb.from("books").insert(row);
+      if (ins.error) { await sb.storage.from("books").remove([filePath, coverPath].filter(Boolean)); throw ins.error; }
+      return { id, filePath };
+    },
+    async deleteBook(id, b) {
+      const del = await sb.from("books").delete().eq("id", id);
+      if (del.error) throw del.error;
+      await sb.storage.from("books").remove([b.fileId, b.coverId].filter(Boolean));
+    },
+    async fileUrl(b) {
+      const { data, error } = await sb.storage.from("books").createSignedUrl(b.fileId, 3600);
+      if (error) throw error;
+      return data.signedUrl;
+    },
+    async saveProgress(id, body) {
+      const { error } = await sb.from("progress").upsert({
+        user_id: uid, book_id: id, page: body.page, total: body.total, loc: body.loc || null,
+        device: body.device, session: body.session, updated_at: body.updatedAt,
+      });
+      if (error) throw error;
+    },
+  };
+  // Covers are downloaded once and kept in IndexedDB, so the shelf shows them offline too.
+  async function loadCover(b) {
+    if (!b.coverId || coverUrls.has(b.coverId)) return;
+    coverUrls.set(b.coverId, null);
+    let blob = await idb.get("cover:" + b.coverId);
+    if (!blob) {
+      const { data } = await sb.storage.from("books").download(b.coverId);
+      if (!data) { coverUrls.delete(b.coverId); return; }
+      blob = data; idb.put("cover:" + b.coverId, blob);
+    }
+    const url = URL.createObjectURL(blob);
+    coverUrls.set(b.coverId, url);
+    for (const bk of books.values()) if (bk.coverId === b.coverId) bk.coverUrl = url;
+    renderLibrary();
+  }
+
+  // ---------- account ----------
+  let authMode = "in";
+  function showAccount(user) {
+    $("#auth").hidden = !!user || !sb;
+    $("#account").hidden = !user; $("#account").textContent = user?.email || "";
+    $("#logout").hidden = !user;
+  }
+  const authError = (e) => {
+    const m = (e && e.message) || "";
+    if (/invalid login credentials/i.test(m)) return "Email atau kata sandi salah.";
+    if (/already registered/i.test(m)) return "Email ini sudah terdaftar. Coba masuk.";
+    if (/password should be at least/i.test(m)) return "Kata sandi minimal 6 karakter.";
+    if (/email not confirmed/i.test(m)) return "Email belum dikonfirmasi. Buka email dari Supabase lalu klik tautannya.";
+    if (/fetch|network/i.test(m)) return "Tidak bisa terhubung. Periksa koneksi internet.";
+    return m || "Gagal masuk. Coba lagi.";
+  };
+  $("#authMode").addEventListener("click", () => {
+    authMode = authMode === "in" ? "up" : "in";
+    $("#authGo").textContent = authMode === "in" ? "Masuk" : "Daftar";
+    $("#authMode").textContent = authMode === "in" ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk";
+    $("#password").autocomplete = authMode === "in" ? "current-password" : "new-password";
+    $("#authMsg").textContent = "";
+  });
+  $("#auth").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!sb) return;
+    const email = $("#email").value.trim(), password = $("#password").value;
+    const btn = $("#authGo"); btn.disabled = true; $("#authMsg").textContent = "Sebentar…";
+    try {
+      const res = authMode === "in" ? await sb.auth.signInWithPassword({ email, password }) : await sb.auth.signUp({ email, password });
+      if (res.error) $("#authMsg").textContent = authError(res.error);
+      else if (!res.data.session) $("#authMsg").textContent = "Akun dibuat. Buka email konfirmasi dari Supabase, lalu masuk di sini.";
+      else { $("#authMsg").textContent = ""; $("#password").value = ""; }
+    } catch (err) { $("#authMsg").textContent = authError(err); }
+    finally { btn.disabled = false; }
+  });
+  $("#logout").addEventListener("click", () => sb && sb.auth.signOut());
+
+  // ---------- boot ----------
+  let refreshTimer = null, channel = null;
+  async function refresh() {
+    if (!uid) return;
+    try {
+      const [bk, pg] = await Promise.all([cloud.loadBooks(), cloud.loadProgress()]);
+      books = bk; progress = pg; libReady = true;
+      lsSet("cache:books:" + uid, [...books.entries()].map(([id, b]) => [id, Object.assign({}, b, { coverUrl: null })]));
+      setSync("ok");
+      for (const b of books.values()) loadCover(b);
+      renderLibrary(); checkRemote();
+    } catch {
+      setSync("offline"); libReady = true; renderLibrary();
+    }
+  }
+  const refreshSoon = () => { clearTimeout(refreshTimer); refreshTimer = setTimeout(refresh, 300); };
+  async function startSession(session) {
+    uid = session?.user?.id || null;
+    showAccount(session?.user || null);
+    if (channel) { sb.removeChannel(channel); channel = null; }
+    if (!uid) {
+      db = assets = null; books = new Map(); progress = new Map(); libReady = true;
+      setSync("local"); renderLibrary(); return;
+    }
+    db = assets = cloud;
+    // Show the last known shelf straight away (works offline), then refresh from the server.
+    const cached = lsGet("cache:books:" + uid);
+    if (cached) { books = new Map(cached); libReady = true; for (const b of books.values()) loadCover(b); renderLibrary(); }
+    await refresh();
+    channel = sb.channel("rak-" + uid)
+      .on("postgres_changes", { event: "*", schema: "public", table: "books", filter: `user_id=eq.${uid}` }, refreshSoon)
+      .on("postgres_changes", { event: "*", schema: "public", table: "progress", filter: `user_id=eq.${uid}` }, refreshSoon)
+      .subscribe();
+  }
+  (async () => {
+    queueMicrotask(renderLibrary);
+    if (!sb) {
+      libReady = true; setSync("local"); showAccount(null);
+      $("#hint").textContent = "Ketuk untuk membuka PDF atau EPUB. Sinkron belum disetel, jadi buku hanya terbuka di perangkat ini.";
+      renderLibrary(); return;
+    }
+    const { data } = await sb.auth.getSession();
+    await startSession(data.session);
+    sb.auth.onAuthStateChange((ev, session) => {
+      if ((session?.user?.id || null) !== uid) startSession(session);
+    });
+  })();
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && uid) refreshSoon(); });
+
+  // ---------- library ----------
+  function getProg(id) {
+    const r = progress.get(id), l = lsGet("prog:" + id);
+    if (r && (!l || r.updatedAt >= l.updatedAt)) return r;
+    return l;
+  }
+  function renderLibrary() {
+    const all = [...localBooks.entries(), ...books.entries()];
+    all.sort((a, b) => (a[1].addedAt || 0) - (b[1].addedAt || 0)); // oldest first, so a new book takes the next free spot
+    $("#room").hidden = all.length === 0;
+    $("#gesture").hidden = all.length === 0;
+    $("#gesture").textContent = coarse
+      ? "Ketuk buku untuk membuka · geser untuk memindah · cubit dua jari untuk mendekat atau menjauh"
+      : "Klik buku untuk membuka · seret untuk memindah · scroll di atas buku untuk mendekat atau menjauh";
+    syncScene(all);
+    $("#loadingShelf").hidden = libReady || all.length > 0;
+    $("#empty").hidden = !(libReady && all.length === 0);
+    $("#count").textContent = all.length ? all.length + " buku" : "";
+    if (scene.sel) fillSheet(scene.sel);
+  }
+
+  // ---------- floating 3D books ----------
+  // Every book is a CSS box drifting in a weightless scene: it wanders around its own spot and
+  // slowly tumbles, each with its own speed and angle. Tapping one turns it to face you.
+  const scene = { els: new Map(), sel: null, raf: 0 };
+  const spineColors = new Map();
+  const hashOf = (s) => { let x = 2166136261; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return (x >>> 0) / 4294967295; };
+  // Spine colour = the cover's left edge, a touch darker, so each book looks bound in its own cloth.
+  function sampleSpine(img, id, el) {
+    try {
+      const c = document.createElement("canvas"); c.width = 12; c.height = 16;
+      const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0, 12, 16);
+      const d = x.getImageData(0, 0, 3, 16).data; let r = 0, g = 0, b = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+      r = r / n * 0.82; g = g / n * 0.82; b = b / n * 0.82;
+      const col = `rgb(${r | 0},${g | 0},${b | 0})`, ink = (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? "#141414" : "#FFFFFF";
+      spineColors.set(id, [col, ink]);
+      el.style.setProperty("--spine", col); el.style.setProperty("--spine-ink", ink);
+    } catch {}
+  }
+  const coverOf = (b) => b.coverUrl || null;
+
+  function makeBook(id, b, total) {
+    const r = (k) => hashOf(id + k);
+    const el = h("button", { class: "b3", "aria-label": "Lihat " + b.title });
+    el.style.setProperty("--t", Math.round(clamp(9 + (total || 40) * 0.07, 10, 34)) + "px");
+    const known = spineColors.get(id);
+    if (known) { el.style.setProperty("--spine", known[0]); el.style.setProperty("--spine-ink", known[1]); }
+    const src = coverOf(b);
+    const ph = h("span", { class: "ph", text: b.title });
+    const prog = h("span", { class: "prog" });
+    const front = h("div", { class: "f front" },
+      src ? h("img", { src, alt: "", draggable: "false", onload: (e) => { if (!spineColors.has(id)) sampleSpine(e.target, id, el); }, onerror: (e) => e.target.replaceWith(ph) }) : ph,
+      prog);
+    const body = h("div", { class: "body" }, front,
+      h("div", { class: "f back" }),
+      h("div", { class: "f spine" }, h("span", { text: b.title })),
+      h("div", { class: "f pages" }),
+      h("div", { class: "f top" }));
+    el.append(body, h("span", { class: "cap", text: b.title }));
+    const s = {
+      id, el, body, prog, fs: h("div", { class: "fs" }), hover: 0, focus: 0, bx: null, by: null, tx: 0, ty: 0, enterAt: 0,
+      rx0: (r("a") - 0.5) * 56, ry0: (r("b") - 0.5) * 100, rz0: (r("c") - 0.5) * 70,
+      ax: 14 + r("d") * 22, ay: 10 + r("e") * 18,
+      fx: 0.13 + r("f") * 0.17, fy: 0.17 + r("g") * 0.2, fr: 0.12 + r("h") * 0.16,
+      z0: -440 + r("z") * 520, az: 50 + r("q") * 90, fz: 0.07 + r("k") * 0.09, zUser: 0,
+      p: [1, 2, 3, 4, 5, 6].map((k) => r("p" + k) * Math.PI * 2),
+    };
+    el.addEventListener("pointerenter", () => { s.hover = 1; });
+    el.addEventListener("pointerleave", () => { s.hover = 0; });
+    s.front = front; s.coverSrc = src;
+    attachDrag(s);
+    return s;
+  }
+
+  let sceneStarted = false;
+  function syncScene(all) {
+    const space = $("#space"), now = performance.now();
+    const ids = new Set(all.map((a) => a[0]));
+    for (const [id, s] of scene.els) if (!ids.has(id)) { s.el.remove(); s.fs.remove(); scene.els.delete(id); }
+    all.forEach(([id, b], i) => {
+      const pr = getProg(id), total = b.pages || pr?.total || 0, page = pr?.page || 0;
+      let s = scene.els.get(id);
+      if (!s) {
+        s = makeBook(id, b, total);
+        s.enterAt = now + (sceneStarted ? 0 : i * 110);
+        scene.els.set(id, s); space.prepend(s.fs); space.append(s.el);
+      }
+      s.index = i;
+      if (b.coverUrl && s.coverSrc !== b.coverUrl) {
+        s.coverSrc = b.coverUrl;
+        s.front.replaceChildren(h("img", { src: b.coverUrl, alt: "", draggable: "false", onload: (e) => { if (!spineColors.has(id)) sampleSpine(e.target, id, s.el); } }), s.prog);
+      }
+      s.prog.style.width = (total && page ? Math.max(1, Math.round((page / total) * 100)) : 0) + "%";
+    });
+    if (all.length) sceneStarted = true;
+    layoutScene(); kick();
+  }
+
+  // Spread books over a loose, jittered grid; every resize or new book glides them to new spots.
+  function layoutScene() {
+    const space = $("#space");
+    const W = space.clientWidth || 320, n = scene.els.size;
+    if (!n) return;
+    const bw = parseFloat(getComputedStyle(space).getPropertyValue("--w")) || 100, bh = bw * 1.42;
+    const cols = clamp(Math.floor(W / (bw * 1.85)), 1, Math.max(1, n));
+    const rows = Math.ceil(n / cols);
+    const cw = W / cols, ch = bh * 1.5;
+    const minH = Math.max(420, Math.min(window.innerHeight * 0.72, 720));
+    const H = Math.max(minH, rows * ch + 80);
+    space.style.height = H + "px";
+    Object.assign(scene, { H, W, bw, bh });
+    const dust = $("#dust"), room = $("#room"), dpr = Math.min(2, window.devicePixelRatio || 1);
+    dust.width = room.clientWidth * dpr; dust.height = H * dpr; scene.dpr = dpr;
+    drawLibrary(room.clientWidth, H);
+    scene.dustRgb = getComputedStyle(document.documentElement).getPropertyValue("--dust").trim();
+    const top = (H - rows * ch) / 2;
+    for (const s of scene.els.values()) {
+      const row = Math.floor(s.index / cols), col = s.index % cols;
+      const inRow = row === rows - 1 ? n - row * cols : cols; // centre a short last row
+      const rowOff = (cols - inRow) * cw / 2;
+      const jx = (hashOf(s.id + "x") - 0.5) * cw * 0.4, jy = (hashOf(s.id + "y") - 0.5) * ch * 0.35;
+      s.tx = clamp(rowOff + cw * (col + 0.5) + jx - bw / 2, 8, W - bw - 8);
+      s.ty = top + ch * row + (ch - bh) / 2 + jy;
+      const saved = lsGet("pos:" + s.id);
+      if (saved && !s.drag && !s.thrown) { s.tx = clamp(saved.x * W, -bw * 0.15, W - bw * 0.85); s.ty = clamp(saved.y * H, -bh * 0.1, H - bh * 0.9); s.zUser = saved.z || 0; s.custom = true; $("#tidy").hidden = false; }
+      if (s.bx == null) { s.bx = s.tx; s.by = s.ty; }
+    }
+  }
+
+  // Fine dust hanging in the air, catching the light: tiny dots drifting slowly upward and sideways.
+  const dustMotes = Array.from({ length: 46 }, (_, i) => ({ x: hashOf("dx" + i), y: hashOf("dy" + i), r: 0.5 + hashOf("dr" + i) * 1.6, a: 0.12 + hashOf("da" + i) * 0.3, v: 0.004 + hashOf("dv" + i) * 0.01, p: hashOf("dp" + i) * 6.28 }));
+  function drawDust(t, still) {
+    const c = $("#dust"), x = c.getContext("2d"), W = c.width, H = c.height, d = scene.dpr || 1;
+    if (!W || !H) return;
+    x.clearRect(0, 0, W, H);
+    const rgb = scene.dustRgb || "90, 90, 90";
+    for (const m of dustMotes) {
+      const yy = (((m.y - (still ? 0 : t * m.v)) % 1) + 1) % 1;
+      const xx = m.x + Math.sin(t * 0.2 + m.p) * 0.015;
+      const tw = 0.6 + 0.4 * Math.sin(t * 0.9 + m.p * 3);
+      x.fillStyle = `rgba(${rgb}, ${(m.a * tw).toFixed(3)})`;
+      x.beginPath(); x.arc(xx * W, yy * H, m.r * d, 0, 6.283); x.fill();
+    }
+  }
+
+  // Depth: books live at different distances from the screen. PERSP and the origin match #space's CSS perspective,
+  // so a point at depth z lands on screen at origin + (p - origin) * PERSP / (PERSP - z).
+  const PERSP = 1500, Z_FAR = -620, Z_NEAR = 220;
+  const originOf = () => ({ x: scene.W * 0.5, y: scene.H * 0.4 });
+  const toScreen = (v, o, z) => o + (v - o) * PERSP / (PERSP - z);
+  const toWorld = (v, o, z) => o + (v - o) * (PERSP - z) / PERSP;
+  function kick() { if (!scene.raf) scene.raf = requestAnimationFrame(frame); }
+  function frame(now) {
+    scene.raf = 0;
+    if (!$("#reader").hidden || document.hidden || !scene.els.size) return;
+    const t = now / 1000, still = reduced;
+    const H = scene.H, W = scene.W, bh = scene.bh, bw = scene.bw;
+    let busy = false;
+    for (const s of scene.els.values()) {
+      if (s.drag) { s.bx = s.tx; s.by = s.ty; busy = true; }
+      else if (s.thrown) {
+        // A thrown book glides, loses speed and bounces softly off the room's edges.
+        s.tx += s.vx; s.ty += s.vy; s.vx *= 0.93; s.vy *= 0.93;
+        const maxX = W - bw * 0.85, maxY = H - bh * 0.9;
+        if (s.tx < -bw * 0.15) { s.tx = -bw * 0.15; s.vx = Math.abs(s.vx) * 0.55; }
+        if (s.tx > maxX) { s.tx = maxX; s.vx = -Math.abs(s.vx) * 0.55; }
+        if (s.ty < -bh * 0.1) { s.ty = -bh * 0.1; s.vy = Math.abs(s.vy) * 0.55; }
+        if (s.ty > maxY) { s.ty = maxY; s.vy = -Math.abs(s.vy) * 0.55; }
+        s.bx = s.tx; s.by = s.ty; busy = true;
+        if (Math.abs(s.vx) + Math.abs(s.vy) < 0.12) { s.thrown = false; savePos(s); }
+      } else { s.bx += (s.tx - s.bx) * 0.05; s.by += (s.ty - s.by) * 0.05; }
+      let e = still ? 1 : clamp((now - s.enterAt) / 1500, 0, 1);
+      e = 1 - Math.pow(1 - e, 3);
+      const held = !!s.drag;
+      const want = scene.sel === s.id || s.hover || held ? 1 : 0;
+      s.focus += (want - s.focus) * (still ? 1 : 0.09);
+      // Wander fades out while a book is held or flying and eases back in once it settles.
+      s.free = (s.free ?? 1) + (((held || s.thrown) ? 0 : 1) - (s.free ?? 1)) * 0.03;
+      const vx = held ? s.drag.vx : s.thrown ? s.vx : 0, vy = held ? s.drag.vy : s.thrown ? s.vy : 0;
+      s.swx = (s.swx || 0) + (clamp(vx, -30, 30) - (s.swx || 0)) * 0.18;
+      s.swy = (s.swy || 0) + (clamp(vy, -30, 30) - (s.swy || 0)) * 0.18;
+      const f = s.focus, w = (still ? 0 : 1) * s.free, P = s.p;
+      const x = s.bx + Math.sin(t * s.fx + P[0]) * s.ax * w * (1 - f * 0.7);
+      const y = s.by + Math.sin(t * s.fy + P[1]) * s.ay * w * (1 - f * 0.7) - (1 - e) * 240;
+      const rx = (s.rx0 + Math.sin(t * s.fr + P[2]) * 12 * w) * (1 - f) - s.swy * 1.4;
+      const ry = (s.ry0 + Math.sin(t * s.fr * 0.8 + P[3]) * 18 * w) * (1 - f) + f * 16 + s.swx * 2.2;
+      const rz = (s.rz0 + Math.sin(t * s.fr * 0.6 + P[4]) * 10 * w) * (1 - f) - (1 - e) * 50 - s.swx * 1.3;
+      const lift = held ? 1.08 : 1;
+      // Front-back: drift slowly toward and away from the screen; a focused or held book comes forward.
+      const zBase = clamp(s.z0 + s.zUser, Z_FAR, Z_NEAR - 60);
+      const zw = zBase + Math.sin(t * s.fz + P[5]) * s.az * w * (1 - f);
+      const z = zw + f * (Math.max(80, zBase + 120) - zw) * (held ? 1 : 0.6) + f * 30;
+      s.z = z;
+      const far = clamp((z - Z_NEAR) / (Z_FAR - Z_NEAR), 0, 1); // 0 near, 1 far
+      s.el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px) scale(${((0.55 + 0.45 * e) * lift).toFixed(3)})`;
+      s.el.style.opacity = (e * (1 - far * 0.32)).toFixed(3); // distant books fade into the bright air
+      s.el.style.zIndex = held ? 2000 : Math.round(1000 + z);
+      s.body.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg)`;
+      // Shadow on the floor: further back books cast it nearer the back wall; the higher a book floats, the fainter and smaller.
+      // The floor sits at the same depth as the book, so perspective moves its shadow back with it.
+      const floorY = H * 0.97;
+      const gap = Math.max(0, floorY - (y + bh));
+      const k = clamp(1 - gap / (H * 0.9), 0.3, 1);
+      const sw = bw * 1.3;
+      s.fs.style.width = sw.toFixed(1) + "px";
+      s.fs.style.transform = `translate3d(${(x + bw / 2 - sw / 2).toFixed(1)}px,${(floorY - 11).toFixed(1)}px,${z.toFixed(1)}px) scale(${k.toFixed(3)})`;
+      s.fs.style.opacity = (0.42 * k * e * (1 - far * 0.4)).toFixed(3);
+    }
+    drawDust(t, still);
+    if (!still || busy) scene.raf = requestAnimationFrame(frame);
+  }
+  window.addEventListener("resize", () => { if ($("#reader").hidden) { layoutScene(); kick(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) kick(); });
+
+  // ---------- dragging books ----------
+  // Pick a book up, move it, let go (or throw it). Where you leave it is remembered on this device.
+  function savePos(s) {
+    if (!scene.W || !scene.H) return;
+    lsSet("pos:" + s.id, { x: +(s.tx / scene.W).toFixed(4), y: +(s.ty / scene.H).toFixed(4), z: Math.round(s.zUser) });
+    s.custom = true; $("#tidy").hidden = false;
+  }
+  function attachDrag(s) {
+    const el = s.el;
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || s.drag) return;
+      const sp = $("#space").getBoundingClientRect();
+      const o = originOf(), z = s.z || 0;
+      // Grab offset measured in world units at the book's depth, so it stays under the pointer.
+      const wx = toWorld(e.clientX - sp.left, o.x, z), wy = toWorld(e.clientY - sp.top, o.y, z);
+      s.drag = { id: e.pointerId, ox: wx - s.bx, oy: wy - s.by, sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, lt: performance.now(), vx: 0, vy: 0, moved: false };
+      s.thrown = false;
+      try { el.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+      kick();
+    });
+    el.addEventListener("pointermove", (e) => {
+      const d = s.drag;
+      if (!d || d.id !== e.pointerId) return;
+      if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 6) d.moved = true;
+      if (!d.moved) return;
+      const sp = $("#space").getBoundingClientRect(), now = performance.now(), dt = Math.max(6, now - d.lt);
+      d.vx = d.vx * 0.5 + ((e.clientX - d.lx) / dt) * 16 * 0.5; // px per frame
+      d.vy = d.vy * 0.5 + ((e.clientY - d.ly) / dt) * 16 * 0.5;
+      d.lx = e.clientX; d.ly = e.clientY; d.lt = now;
+      const o = originOf(), z = s.z || 0;
+      s.tx = toWorld(e.clientX - sp.left, o.x, z) - d.ox;
+      s.ty = toWorld(e.clientY - sp.top, o.y, z) - d.oy;
+      kick();
+    });
+    const end = (e, cancelled) => {
+      const d = s.drag;
+      if (!d || d.id !== e.pointerId) return;
+      s.drag = null;
+      if (!d.moved) { if (!cancelled && !d.pinched) select(s.id); kick(); return; }
+      const idle = performance.now() - d.lt > 90; // finger rested before letting go: no throw
+      s.vx = idle ? 0 : clamp(d.vx, -45, 45); s.vy = idle ? 0 : clamp(d.vy, -45, 45);
+      s.thrown = true; kick();
+    };
+    el.addEventListener("pointerup", (e) => end(e, false));
+    el.addEventListener("pointercancel", (e) => end(e, true));
+    el.addEventListener("click", (e) => { if (e.detail === 0) select(s.id); }); // keyboard activation
+    el.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      s.zUser = clamp(s.zUser - e.deltaY * 0.7, Z_FAR - s.z0, Z_NEAR - 60 - s.z0);
+      clearTimeout(s.zSave); s.zSave = setTimeout(() => savePos(s), 400);
+      kick();
+    }, { passive: false });
+  }
+  $("#tidy").addEventListener("click", () => {
+    for (const s of scene.els.values()) { try { localStorage.removeItem("rakbaca:pos:" + s.id); } catch {} s.custom = false; s.thrown = false; s.zUser = 0; }
+    $("#tidy").hidden = true; layoutScene(); kick();
+  });
+
+  // Two-finger pinch on a phone: spread to pull the book closer, pinch in to push it back.
+  let pinch = null;
+  const touchDist = (e) => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  $("#space").addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 2) return;
+    const all = [...scene.els.values()];
+    let s = all.find((b) => b.drag);
+    if (!s) { const el = e.target.closest && e.target.closest(".b3"); s = el && all.find((b) => b.el === el); }
+    if (!s) {
+      // fingers landed beside the books: take the one nearest the middle of the two fingers
+      const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2, my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      let best = Infinity;
+      for (const b of all) { const r = b.el.getBoundingClientRect(), dd = Math.hypot(r.left + r.width / 2 - mx, r.top + r.height / 2 - my); if (dd < best) { best = dd; s = b; } }
+    }
+    if (!s) return;
+    pinch = { s, d0: touchDist(e), z0: s.zUser };
+    if (s.drag) s.drag.pinched = true;
+    s.hover = 1;
+    e.preventDefault();
+  }, { passive: false });
+  $("#space").addEventListener("touchmove", (e) => {
+    if (!pinch || e.touches.length !== 2) return;
+    const s = pinch.s;
+    s.zUser = clamp(pinch.z0 + (touchDist(e) - pinch.d0) * 2.4, Z_FAR - s.z0, Z_NEAR - 60 - s.z0);
+    if (s.drag) s.drag.pinched = true;
+    e.preventDefault(); kick();
+  }, { passive: false });
+  const endPinch = (e) => {
+    if (!pinch || e.touches.length >= 2) return;
+    const s = pinch.s; pinch = null; s.hover = 0;
+    savePos(s); kick();
+  };
+  $("#space").addEventListener("touchend", endPinch);
+  $("#space").addEventListener("touchcancel", endPinch);
+
+  // ---------- the library around the books ----------
+  // One-point perspective: a bookcase on the back wall, bookcases receding along both side walls,
+  // a plank floor, and strong white light from above washing most of it out.
+  const LIB = { floor: 0.64 };
+  function drawLibrary(W, H) {
+    const c = $("#libbg");
+    const dark = cssVar("--bg", "#ffffff").toLowerCase() === "#111111";
+    const key = `${W}x${H}${dark ? "d" : "l"}`;
+    if (c._key === key) return;
+    c._key = key;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+    const x = c.getContext("2d");
+    x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const P = dark
+      ? { wall: "#1A1A1A", ceil: "#202020", case: "#232323", back: "#191919", board: "#2C2C2C", floorFar: "#1C1C1C", floorNear: "#121212", line: "rgba(255,255,255,.04)", spines: ["#2E2E2E", "#262626", "#333333", "#2A2A2A", "#383838", "#242424"], light: 0.32 }
+      : { wall: "#F3F3F3", ceil: "#FAFAFA", case: "#E9E9E9", back: "#DEDEDE", board: "#E4E4E4", floorFar: "#ECECEC", floorNear: "#F8F8F8", line: "rgba(0,0,0,.05)", spines: ["#E6E6E6", "#D9D9D9", "#EEEEEE", "#D0D0D0", "#E1E1E1", "#C8C8C8", "#F2F2F2"], light: 0.92 };
+    let seed = 11;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const vx = W / 2, vy = H * 0.4;
+    const bx0 = clamp(W * 0.2, 54, 320), bx1 = W - bx0, top = H * 0.07, floorY = H * LIB.floor;
+    const along = (yb, xx) => vy + (yb - vy) * ((vx - xx) / (vx - bx0)); // y on the left wall at x, for a back-wall height yb
+    const rows = 6, rh = (floorY - top) / rows;
+
+    x.fillStyle = P.wall; x.fillRect(0, 0, W, H);
+    // ceiling
+    x.fillStyle = P.ceil;
+    x.beginPath(); x.moveTo(0, 0); x.lineTo(W, 0); x.lineTo(W, along(top, 0)); x.lineTo(bx1, top); x.lineTo(bx0, top); x.lineTo(0, along(top, 0)); x.closePath(); x.fill();
+    // floor with planks running toward the vanishing point
+    const lb = along(floorY, 0);
+    x.save();
+    x.beginPath(); x.moveTo(bx0, floorY); x.lineTo(bx1, floorY); x.lineTo(W, lb); x.lineTo(W, H + 2); x.lineTo(0, H + 2); x.lineTo(0, lb); x.closePath();
+    const fg = x.createLinearGradient(0, floorY, 0, H); fg.addColorStop(0, P.floorFar); fg.addColorStop(1, P.floorNear);
+    x.fillStyle = fg; x.fill(); x.clip();
+    x.strokeStyle = P.line; x.lineWidth = 1;
+    for (let i = -40; i <= 40; i++) { x.beginPath(); x.moveTo(vx, vy); x.lineTo(vx + i * W * 0.05, H * 3); x.stroke(); }
+    for (let k = 0, yy = floorY; yy < H; k++, yy = vy + (floorY - vy) * Math.pow(1.45, k)) { x.beginPath(); x.moveTo(0, yy); x.lineTo(W, yy); x.stroke(); }
+    x.restore();
+
+    // shelf of book spines inside a rectangle (back wall)
+    const fillBooks = (ix, iy, iw, ih) => {
+      let bx = ix + 2;
+      while (bx < ix + iw - 3) {
+        const w = (4 + rnd() * 8) * (ih / 64);
+        if (rnd() < 0.07) { bx += w * 1.6; continue; }
+        const hgt = ih * (0.6 + rnd() * 0.36);
+        x.fillStyle = P.spines[(rnd() * P.spines.length) | 0];
+        x.fillRect(bx, iy + ih - hgt, Math.min(w, ix + iw - bx - 1), hgt);
+        bx += w + 0.7;
+      }
+    };
+    x.fillStyle = P.case; x.fillRect(bx0, top, bx1 - bx0, floorY - top);
+    const cols = Math.max(2, Math.round((bx1 - bx0) / 150)), cw = (bx1 - bx0) / cols;
+    for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) {
+      const ix = bx0 + k * cw + 5, iy = top + r * rh + 4, iw = cw - 10, ih = rh - 10;
+      x.fillStyle = P.back; x.fillRect(ix, iy, iw, ih);
+      fillBooks(ix, iy, iw, ih);
+    }
+    x.fillStyle = P.board;
+    for (let r = 0; r <= rows; r++) x.fillRect(bx0, top + r * rh - 3, bx1 - bx0, 6);
+    for (let k = 0; k <= cols; k++) x.fillRect(bx0 + k * cw - 3, top, 6, floorY - top);
+
+    // side walls: the same bookcase, receding. Depth d maps to x with perspective foreshortening.
+    const X = (d) => vx - (vx - bx0) / (1 - 0.9 * d);
+    for (const side of [-1, 1]) {
+      const mx = (xx) => (side < 0 ? xx : W - xx);
+      x.fillStyle = P.case;
+      x.beginPath(); x.moveTo(mx(0), along(top, 0)); x.lineTo(mx(bx0), top); x.lineTo(mx(bx0), floorY); x.lineTo(mx(0), lb); x.closePath(); x.fill();
+      for (let r = 0; r < rows; r++) {
+        const yT = top + r * rh + 4, yB = top + (r + 1) * rh - 6;
+        let d = 0;
+        while (true) {
+          const dw = 0.01 + rnd() * 0.022, xa = X(d), xb = X(d + dw);
+          if (xa < -40) break;
+          d += dw + 0.0015;
+          if (rnd() < 0.06) continue;
+          const hf = 0.6 + rnd() * 0.36;
+          const yb1 = along(yB, xa), yb2 = along(yB, xb), yt1 = along(yT, xa), yt2 = along(yT, xb);
+          x.fillStyle = P.spines[(rnd() * P.spines.length) | 0];
+          x.beginPath();
+          x.moveTo(mx(xa), yb1 - (yb1 - yt1) * hf); x.lineTo(mx(xb), yb2 - (yb2 - yt2) * hf);
+          x.lineTo(mx(xb), yb2); x.lineTo(mx(xa), yb1); x.closePath(); x.fill();
+        }
+        // shelf board
+        const yS = top + (r + 1) * rh;
+        x.fillStyle = P.board;
+        x.beginPath(); x.moveTo(mx(bx0), yS - 3); x.lineTo(mx(0), along(yS - 3, 0)); x.lineTo(mx(0), along(yS + 3, 0)); x.lineTo(mx(bx0), yS + 3); x.closePath(); x.fill();
+      }
+      // uprights between bookcases
+      for (let d = 0.18; X(d) > -20; d += 0.18) {
+        const xx = X(d), w2 = 7 * (vx - bx0) / Math.max(1, vx - xx) * ((vx - xx) / (vx - bx0));
+        x.fillStyle = P.board;
+        x.fillRect(mx(xx) - w2 / 2, along(top, xx), w2, along(floorY, xx) - along(top, xx));
+      }
+    }
+
+    // light: a wide skylight bloom and soft rays falling into the room
+    const L = P.light;
+    x.save();
+    for (let i = 0; i < 7; i++) {
+      const cx = W * (0.18 + i * 0.11), spread = W * (0.035 + rnd() * 0.05), lean = W * 0.16;
+      const g = x.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, `rgba(255,255,255,${(0.5 * L).toFixed(3)})`); g.addColorStop(0.75, `rgba(255,255,255,${(0.12 * L).toFixed(3)})`); g.addColorStop(1, "rgba(255,255,255,0)");
+      x.fillStyle = g;
+      x.beginPath(); x.moveTo(cx - spread * 0.4, -10); x.lineTo(cx + spread * 0.4, -10); x.lineTo(cx + lean + spread * 1.6, H); x.lineTo(cx + lean - spread * 1.6, H); x.closePath(); x.fill();
+    }
+    const R0 = Math.max(W, H);
+    const bloom = x.createRadialGradient(W / 2, -H * 0.05, 0, W / 2, -H * 0.05, R0 * 0.95);
+    bloom.addColorStop(0, `rgba(255,255,255,${L})`); bloom.addColorStop(0.35, `rgba(255,255,255,${(0.78 * L).toFixed(3)})`);
+    bloom.addColorStop(0.7, `rgba(255,255,255,${(0.38 * L).toFixed(3)})`); bloom.addColorStop(1, `rgba(255,255,255,${(0.12 * L).toFixed(3)})`);
+    x.fillStyle = bloom; x.fillRect(0, 0, W, H);
+    const pool = x.createRadialGradient(W / 2, H * 0.86, 0, W / 2, H * 0.86, W * 0.5);
+    pool.addColorStop(0, `rgba(255,255,255,${(0.7 * L).toFixed(3)})`); pool.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = pool; x.fillRect(0, floorY, W, H - floorY);
+    x.restore();
+  }
+
+  // ---------- book sheet (details + actions for the tapped book) ----------
+  function select(id) {
+    if (scene.sel !== id) { $("#shConfirm").hidden = true; $("#shActs").hidden = false; $("#shYes").disabled = false; }
+    scene.sel = id; fillSheet(id); $("#sheet").hidden = false; kick();
+  }
+  function closeSheet() { scene.sel = null; $("#sheet").hidden = true; kick(); }
+  function fillSheet(id) {
+    const b = books.get(id) || localBooks.get(id);
+    if (!b) { closeSheet(); return; }
+    const pr = getProg(id), total = b.pages || pr?.total || 0, page = pr?.page || 0;
+    const pct = total && page ? Math.max(1, Math.round((page / total) * 100)) : 0;
+    const src = coverOf(b);
+    $("#shCover").replaceChildren(src ? h("img", { src, alt: "" }) : h("span", { class: "ph", text: b.title }));
+    $("#shTitle").textContent = b.title;
+    $("#shSub").textContent = b.kind === "epub"
+      ? (page ? `${pct}% dibaca · EPUB` : `EPUB · ${fmtMB(b.sizeBytes || 0)}${b.author ? " · " + b.author : ""}`)
+      : (page ? `Hal. ${page} dari ${total} · ${pct}%` : `${total} halaman · ${fmtMB(b.sizeBytes || 0)}`);
+    $("#shBar").style.width = pct + "%";
+    $("#shWhere").textContent = page && pr.device ? `Terakhir dibaca di ${pr.device}, ${rel(pr.updatedAt)}` : (b.local ? "Hanya di perangkat ini" : "Belum dibuka");
+    $("#shRead").textContent = page > 1 ? "Lanjut baca" : "Mulai baca";
+    $("#shDel").hidden = !(b.local || assets);
+    $("#shConfirmText").textContent = b.local ? "Tutup buku ini dari rak?" : "Hapus dari semua perangkat? Progres bacanya ikut terhapus.";
+  }
+  $("#sheet").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeSheet(); });
+  $("#shClose").addEventListener("click", closeSheet);
+  $("#shRead").addEventListener("click", () => { const id = scene.sel; closeSheet(); if (id) openBook(id); });
+  $("#shDel").addEventListener("click", () => { $("#shActs").hidden = true; $("#shConfirm").hidden = false; });
+  $("#shNo").addEventListener("click", () => { $("#shConfirm").hidden = true; $("#shActs").hidden = false; });
+  $("#shYes").addEventListener("click", async (e) => {
+    const id = scene.sel, b = books.get(id) || localBooks.get(id);
+    if (!b) return closeSheet();
+    await deleteBook(id, b, e.currentTarget);
+    if (!books.has(id) && !localBooks.has(id)) closeSheet();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && scene.sel && $("#reader").hidden) closeSheet(); });
+
+  async function deleteBook(id, b, btn) {
+    btn.disabled = true;
+    if (b.local) { localBooks.delete(id); memBytes.delete(id); renderLibrary(); return; }
+    try {
+      await cloud.deleteBook(id, b);
+      idb.del(b.fileId); memBytes.delete(b.fileId);
+      if (b.coverId) idb.del("cover:" + b.coverId);
+      await refresh();
+      say("ok", `${b.title} sudah dihapus dari rak.`);
+    } catch {
+      btn.disabled = false;
+      say("err", "Buku belum terhapus. Periksa koneksi lalu coba lagi.");
+    }
+  }
+
+  // ---------- EPUB ----------
+  // The asset store can't hold .epub files, so an EPUB is unpacked on upload into a JSON "book":
+  // text blocks with bold/italic runs, headings, list items, quotes and images (small JPEG data URLs).
+  // When reading, those blocks are typeset onto canvas pages sized to the screen, so the paper curl works the same.
+  const EPUB_FONT = '"Literata", Georgia, "Times New Roman", serif';
+  const isEpubFile = (f) => f.type === "application/epub+zip" || /\.epub$/i.test(f.name);
+  const isPdfFile = (f) => f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+  const BOLD = 1, ITALIC = 2;
+  const IMG_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml" };
+
+  async function importEpub(file, onStep) {
+    if (!window.JSZip) throw new Error("nozip");
+    const zip = await JSZip.loadAsync(file);
+    const read = (p) => (p && zip.file(p) ? zip.file(p).async("string") : Promise.resolve(null));
+    const parse = (s, type) => new DOMParser().parseFromString(s, type);
+    const container = await read("META-INF/container.xml");
+    if (!container) throw new Error("bad");
+    const opfPath = parse(container, "application/xml").querySelector("rootfile")?.getAttribute("full-path");
+    const opfText = await read(opfPath);
+    if (!opfText) throw new Error("bad");
+    const opf = parse(opfText, "application/xml");
+    const resolve = (from, href) => { try { return decodeURIComponent(new URL(href, "https://x/" + from).pathname.slice(1)); } catch { return null; } };
+    const manifest = new Map();
+    for (const it of opf.querySelectorAll("manifest > item")) {
+      manifest.set(it.getAttribute("id"), { href: resolve(opfPath, it.getAttribute("href") || ""), type: it.getAttribute("media-type") || "", props: it.getAttribute("properties") || "" });
+    }
+    const dc = (n) => opf.getElementsByTagNameNS("http://purl.org/dc/elements/1.1/", n)[0]?.textContent.trim() || "";
+    const spine = [...opf.querySelectorAll("spine > itemref")].map((r) => manifest.get(r.getAttribute("idref"))).filter((m) => m && /html|xml/.test(m.type));
+    let coverItem = [...manifest.values()].find((m) => /cover-image/.test(m.props));
+    if (!coverItem) {
+      const cid = [...opf.querySelectorAll("meta")].find((m) => m.getAttribute("name") === "cover")?.getAttribute("content");
+      if (cid) coverItem = manifest.get(cid);
+    }
+
+    let budget = 40 * 1024 * 1024;
+    const imgCache = new Map();
+    async function imageData(path, maxSide) {
+      const key = path + "@" + maxSide;
+      if (imgCache.has(key)) return imgCache.get(key);
+      let out = null;
+      try {
+        const f = zip.file(path);
+        if (f) {
+          const ext = (path.split(".").pop() || "").toLowerCase();
+          const blob = new Blob([await f.async("arraybuffer")], { type: IMG_TYPES[ext] || "image/jpeg" });
+          let bmp;
+          try { bmp = await createImageBitmap(blob); }
+          catch { bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(blob); }); }
+          const s = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+          const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(bmp.width * s)); c.height = Math.max(1, Math.round(bmp.height * s));
+          const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0, c.width, c.height);
+          const src = c.toDataURL("image/jpeg", 0.8);
+          if (src.length < budget) { budget -= src.length; out = { src, w: c.width, h: c.height, canvas: c }; }
+        }
+      } catch {}
+      imgCache.set(key, out);
+      return out;
+    }
+
+    const blocks = [];
+    let runs = [], meta = {};
+    const BLOCK = /^(p|div|h[1-6]|li|blockquote|pre|section|article|figure|figcaption|header|footer|aside|nav|table|tr|td|th|ul|ol|dl|dt|dd|body|center|main|address)$/;
+    const flush = () => {
+      if (runs.some((r) => r[0].trim())) {
+        const merged = [];
+        for (const r of runs) { const last = merged[merged.length - 1]; if (last && last[1] === r[1]) last[0] += r[0]; else merged.push([r[0], r[1]]); }
+        blocks.push(Object.assign({ t: meta.h ? "h" : "p", r: merged }, meta.h ? { l: meta.h } : {}, meta.li ? { li: 1 } : {}, meta.q ? { q: 1 } : {}));
+      }
+      runs = [];
+    };
+    function walk(node, style, chap) {
+      for (const n of node.childNodes) {
+        if (n.nodeType === 3) { const s = n.nodeValue.replace(/\s+/g, " "); if (s) runs.push([s, style]); continue; }
+        if (n.nodeType !== 1) continue;
+        const tag = (n.localName || "").toLowerCase();
+        if (tag === "script" || tag === "style" || tag === "head" || tag === "title") continue;
+        if (tag === "br") { runs.push(["\n", style]); continue; }
+        if (tag === "hr") { flush(); blocks.push({ t: "hr" }); continue; }
+        if (tag === "img" || tag === "image") {
+          const href = n.getAttribute("src") || n.getAttribute("href") || n.getAttributeNS("http://www.w3.org/1999/xlink", "href");
+          if (href) { flush(); blocks.push({ t: "img", path: resolve(chap, href) }); }
+          continue;
+        }
+        let st = style;
+        if (/^(em|i|cite|var|dfn)$/.test(tag)) st |= ITALIC;
+        if (/^(strong|b|th)$/.test(tag)) st |= BOLD;
+        if (/^h[1-6]$/.test(tag)) {
+          flush(); const prev = meta; meta = Object.assign({}, meta, { h: +tag[1] }); walk(n, st | BOLD, chap); flush(); meta = prev; continue;
+        }
+        if (tag === "li" || tag === "blockquote") {
+          flush(); const prev = meta; meta = Object.assign({}, meta, tag === "li" ? { li: 1 } : { q: 1 });
+          if (tag === "li") runs.push(["• ", style]);
+          walk(n, st, chap); flush(); meta = prev; continue;
+        }
+        if (BLOCK.test(tag)) { flush(); walk(n, st, chap); flush(); continue; }
+        walk(n, st, chap);
+      }
+    }
+    for (let i = 0; i < spine.length; i++) {
+      onStep?.(`Membaca bab ${i + 1} dari ${spine.length}…`);
+      const text = await read(spine[i].href);
+      if (!text) continue;
+      let doc = parse(text, "application/xhtml+xml");
+      if (doc.getElementsByTagName("parsererror").length) doc = parse(text, "text/html");
+      const body = doc.body || doc.getElementsByTagName("body")[0];
+      if (!body) continue;
+      if (blocks.length && blocks[blocks.length - 1].t !== "ch") blocks.push({ t: "ch" });
+      runs = []; meta = {};
+      walk(body, 0, spine[i].href); flush();
+    }
+    onStep?.("Menyiapkan gambar…");
+    const out = [];
+    for (const b of blocks) {
+      if (b.t !== "img") { out.push(b); continue; }
+      const im = b.path ? await imageData(b.path, 1100) : null;
+      if (im) out.push({ t: "img", src: im.src, w: im.w, h: im.h });
+    }
+    while (out.length && out[out.length - 1].t === "ch") out.pop();
+    if (!out.some((b) => b.t === "p" || b.t === "h" || b.t === "img")) throw new Error("empty");
+
+    const title = dc("title") || cleanTitle(file.name.replace(/\.epub$/i, ""));
+    const author = dc("creator");
+    let coverCanvas = null;
+    if (coverItem?.href) coverCanvas = (await imageData(coverItem.href, 640))?.canvas || null;
+    if (!coverCanvas) {
+      const first = out.find((b) => b.t === "img");
+      if (first) { const im = new Image(); im.src = first.src; try { await im.decode(); const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0); coverCanvas = c; } catch {} }
+    }
+    if (!coverCanvas) coverCanvas = await plainCover(title, author);
+    const cover = await new Promise((res) => coverCanvas.toBlob(res, "image/jpeg", 0.85));
+    const words = out.reduce((n, b) => n + (b.r ? b.r.reduce((m, r) => m + r[0].split(/\s+/).length, 0) : 0), 0);
+    let book = { v: 1, title, author, blocks: out };
+    let json = JSON.stringify(book);
+    if (json.length > MAX_BYTES - 200000) { book = { v: 1, title, author, blocks: out.filter((b) => b.t !== "img") }; json = JSON.stringify(book); }
+    return { title, author, json, cover, pages: Math.max(1, Math.round(words / 260)) };
+  }
+
+  // A quiet generated cover for EPUBs that ship without one: title and author set on grey paper.
+  async function plainCover(title, author) {
+    await loadBookFonts();
+    const c = document.createElement("canvas"); c.width = 320; c.height = 456;
+    const x = c.getContext("2d");
+    x.fillStyle = "#E8E8E8"; x.fillRect(0, 0, 320, 456);
+    x.fillStyle = "#1A1A1A"; x.textAlign = "center";
+    x.font = `600 26px ${EPUB_FONT}`;
+    const words = title.split(/\s+/), lines = [];
+    let line = "";
+    for (const w of words) { const t = line ? line + " " + w : w; if (x.measureText(t).width > 250 && line) { lines.push(line); line = w; } else line = t; }
+    if (line) lines.push(line);
+    lines.slice(0, 5).forEach((l, i) => x.fillText(l, 160, 150 + i * 34));
+    if (author) { x.font = `400 15px ${EPUB_FONT}`; x.fillStyle = "#6A6A6A"; x.fillText(author, 160, 400); }
+    return c;
+  }
+
+  let fontsReady = null;
+  function loadBookFonts() {
+    if (!fontsReady) {
+      const want = [`400 16px ${EPUB_FONT}`, `italic 400 16px ${EPUB_FONT}`, `600 16px ${EPUB_FONT}`, `italic 600 16px ${EPUB_FONT}`];
+      fontsReady = Promise.race([
+        Promise.all(want.map((f) => document.fonts?.load(f).catch(() => null))),
+        new Promise((r) => setTimeout(r, 2500)),
+      ]);
+    }
+    return fontsReady;
+  }
+
+  // Typeset the book into pages of W×H CSS px. Each page keeps where it starts ({b: block, w: word})
+  // so the reading position survives a different screen size on another device.
+  function typesetEpub(book, W, H) {
+    const blocks = book.blocks;
+    const fs = clamp(W / 23, 15, 19.5), lh = fs * 1.58;
+    const mx = Math.round(clamp(W * 0.09, 20, 60)), top = Math.round(clamp(H * 0.075, 26, 64)), bottom = H - Math.round(clamp(H * 0.085, 34, 70));
+    const cw = W - mx * 2;
+    const mc = document.createElement("canvas").getContext("2d");
+    const font = (st, size) => `${st & ITALIC ? "italic " : ""}${st & BOLD ? 600 : 400} ${size.toFixed(2)}px ${EPUB_FONT}`;
+    const wcache = new Map();
+    const measure = (s, f) => { const k = f + "|" + s; let w = wcache.get(k); if (w == null) { mc.font = f; w = mc.measureText(s).width; wcache.set(k, w); } return w; };
+    const pages = [];
+    let page, y;
+    const newPage = (b, w) => { page = { start: { b, w }, ops: [] }; pages.push(page); y = top; };
+    newPage(0, 0);
+    let afterHeading = true, chapterTop = true;
+    blocks.forEach((blk, bi) => {
+      if (blk.t === "ch") { if (page.ops.length) newPage(bi, 0); afterHeading = true; chapterTop = true; return; }
+      if (blk.t === "hr") { if (y + lh * 2 > bottom) newPage(bi, 0); page.ops.push({ k: "hr", y: y + lh }); y += lh * 2; afterHeading = true; return; }
+      if (blk.t === "img") {
+        let s = Math.min(cw / blk.w, (bottom - top) / blk.h, 1.25);
+        // Shrink to fit what's left of the page when that keeps at least 55% of its size; otherwise start a new page.
+        if (y + blk.h * s > bottom && page.ops.length && (bottom - y) < blk.h * s * 0.55) newPage(bi, 0);
+        s = Math.min(s, (bottom - y) / blk.h);
+        const dw = blk.w * s, dh = blk.h * s;
+        page.ops.push({ k: "img", bi, x: mx + (cw - dw) / 2, y, w: dw, h: dh });
+        y += dh + lh * 0.6; afterHeading = false; chapterTop = false;
+        return;
+      }
+      const isH = blk.t === "h";
+      const size = isH ? fs * (blk.l <= 1 ? 1.55 : blk.l === 2 ? 1.32 : 1.14) : fs;
+      const lineH = isH ? size * 1.32 : lh;
+      const left = mx + (blk.q ? fs * 1.4 : 0) + (blk.li ? fs * 0.4 : 0);
+      const width = cw - (left - mx) - (blk.q ? fs * 0.8 : 0);
+      const indent = !isH && !afterHeading && !blk.li && !blk.q ? fs * 1.4 : 0;
+      if (isH) {
+        if (chapterTop && page.ops.length === 0) y = top + (H - top) * 0.1;
+        else { y += lineH * 0.9; if (y + lineH * 3 > bottom) newPage(bi, 0); }
+      } else if ((blk.q || blk.li) && !afterHeading) y += lh * 0.15;
+
+      // Words with their style; `sp` marks a space before the word, `br` a forced line break.
+      const toks = [];
+      let pendingSpace = false;
+      for (const [text, st] of blk.r) {
+        const f = font(blk.q ? st ^ ITALIC : st, size); // quotes are set in italic
+        for (const part of text.split(/(\n| +)/)) {
+          if (!part) continue;
+          if (part === "\n") { toks.push({ br: true }); pendingSpace = false; continue; }
+          if (/^ +$/.test(part)) { pendingSpace = true; continue; }
+          toks.push({ s: part, f, w: measure(part, f), sp: pendingSpace });
+          pendingSpace = false;
+        }
+      }
+      const spaceW = measure(" ", font(0, size));
+      let line = [], lw = 0, first = true;
+      const emit = (justify) => {
+        if (!line.length) { y += lineH * (first ? 0 : 1); return; }
+        if (y + lineH > bottom) newPage(bi, line[0].i);
+        const ind = first ? indent : 0, avail = width - ind;
+        let gaps = 0, natural = 0;
+        line.forEach((t, k) => { natural += t.w; if (k && t.sp) { natural += spaceW; gaps++; } });
+        let extra = justify && !isH && gaps ? (avail - natural) / gaps : 0;
+        if (extra > spaceW * 2.2) extra = 0;
+        let x = isH ? left + Math.max(0, (width - natural) / 2) : left + ind;
+        const base = y + (lineH - size) / 2 + size * 0.8;
+        line.forEach((t, k) => {
+          if (k && t.sp) x += spaceW + extra;
+          page.ops.push({ k: "t", x, y: base, s: t.s, f: t.f });
+          x += t.w;
+        });
+        y += lineH; first = false; line = []; lw = 0;
+      };
+      toks.forEach((t, i) => {
+        if (t.br) { emit(false); return; }
+        t.i = i;
+        const add = (line.length && t.sp ? spaceW : 0) + t.w;
+        if (line.length && lw + add > width - (first ? indent : 0)) { emit(true); line.push(t); lw = t.w; }
+        else { line.push(t); lw += add; }
+      });
+      emit(false);
+      if (isH) y += lineH * 0.55;
+      afterHeading = isH; chapterTop = false;
+    });
+    if (pages.length > 1 && !pages[pages.length - 1].ops.length) pages.pop();
+    return pages;
+  }
+
+  const locBefore = (a, b) => a.b < b.b || (a.b === b.b && a.w <= b.w);
+  function pageForLoc(loc) {
+    if (!loc || !R.pages) return 1;
+    let p = 1;
+    for (let i = 0; i < R.pages.length; i++) { if (locBefore(R.pages[i].start, loc)) p = i + 1; else break; }
+    return p;
+  }
+  const currentLoc = () => (R.pages && R.pages[R.page - 1] ? R.pages[R.page - 1].start : null);
+
+  function renderEpubPage(n, Wd, Hd) {
+    const c = document.createElement("canvas"); c.width = Wd; c.height = Hd;
+    const x = c.getContext("2d");
+    x.fillStyle = "#fff"; x.fillRect(0, 0, Wd, Hd);
+    const s = Wd / R.pageW; x.scale(s, s);
+    const pg = R.pages[n - 1];
+    x.fillStyle = "#1C1C1C"; x.textBaseline = "alphabetic";
+    let lastF = "";
+    for (const op of pg.ops) {
+      if (op.k === "t") { if (op.f !== lastF) { x.font = op.f; lastF = op.f; } x.fillText(op.s, op.x, op.y); }
+      else if (op.k === "img") { const im = R.epubImgs.get(op.bi); if (im) x.drawImage(im, op.x, op.y, op.w, op.h); }
+      else if (op.k === "hr") { x.fillStyle = "#9A9A9A"; x.font = `400 14px ${EPUB_FONT}`; lastF = ""; x.textAlign = "center"; x.fillText("⁂", R.pageW / 2, op.y); x.textAlign = "left"; x.fillStyle = "#1C1C1C"; }
+    }
+    x.fillStyle = "#A0A0A0"; x.font = `400 11px ${EPUB_FONT}`; x.textAlign = "center";
+    x.fillText(String(n), R.pageW / 2, R.pageH - Math.round(clamp(R.pageH * 0.04, 16, 30)));
+    return c;
+  }
+
+  async function renderCover(pdf) {
+    const page = await pdf.getPage(1);
+    const vp1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: 320 / vp1.width });
+    const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    return new Promise((res) => c.toBlob(res, "image/jpeg", 0.82));
+  }
+
+  const uploadMsg = (e) => ({
+    too_large: "File ini lebih dari 50 MB. Kompres dulu lalu coba lagi.",
+    quota_or_state: "Penyimpanan rak sudah penuh. Hapus buku yang sudah selesai lalu coba lagi.",
+    rate_limited: "Terlalu banyak unggahan sekaligus. Tunggu sebentar lalu coba lagi.",
+    upstream_auth: "Sesi kamu sudah habis. Muat ulang halaman ini lalu coba lagi.",
+    unsupported_type: "Format file ini tidak didukung.",
+  }[e && (e.code || (String(e.statusCode) === "413" || /exceeded|too large/i.test(e.message || "") ? "too_large" : ""))] || "Unggahan gagal. Periksa koneksi lalu coba lagi.");
+
+  let uploading = false;
+  async function handleFile(file) {
+    if (!file || uploading) return;
+    const epub = isEpubFile(file);
+    if (!epub && !isPdfFile(file)) return say("err", `"${file.name}" bukan PDF atau EPUB. Pilih file berakhiran .pdf atau .epub.`);
+    if (!epub && !pdfjs) return say("err", "Pembaca PDF gagal dimuat. Muat ulang halaman ini.");
+    if (epub && !window.JSZip) return say("err", "Pembaca EPUB gagal dimuat. Muat ulang halaman ini.");
+    let title = cleanTitle(file.name.replace(/\.epub$/i, ""));
+    const sync = !!(db && assets);
+    if (!epub && sync && file.size > MAX_BYTES) return say("err", `${title} berukuran ${fmtMB(file.size)}, batasnya 50 MB per file. Kompres dulu PDF-nya lalu coba lagi.`);
+    uploading = true;
+    try {
+      say("busy", `Membaca ${title}…`);
+      let bytes, pages, cover = null, author = "";
+      try {
+        if (epub) {
+          const r = await importEpub(file, (m) => say("busy", `${title}: ${m}`));
+          ({ title, author, pages, cover } = r);
+          bytes = new TextEncoder().encode(r.json);
+        } else {
+          bytes = new Uint8Array(await file.arrayBuffer());
+          const pdf = await openPdf(bytes);
+          pages = pdf.numPages;
+          try { cover = await renderCover(pdf); } catch {}
+          pdf.destroy();
+        }
+      } catch { return say("err", `${title} tidak bisa dibuka. Mungkin filenya rusak${epub ? " atau dikunci DRM" : " atau dikunci kata sandi"}.`); }
+      const kind = epub ? "epub" : "pdf";
+
+      if (!sync) {
+        const id = "local-" + Date.now().toString(36);
+        localBooks.set(id, { kind, title, author, pages, sizeBytes: file.size, addedAt: Date.now(), local: true, coverUrl: cover ? URL.createObjectURL(cover) : null });
+        remember(id, bytes); renderLibrary();
+        say("ok", sb ? `${title} dibuka sementara di perangkat ini. Masuk dulu supaya bukunya tersimpan dan sinkron ke HP dan laptop.` : `${title} dibuka di perangkat ini saja.`);
+        return;
+      }
+      if (bytes.length > MAX_BYTES) return say("err", `${title} terlalu besar setelah dibongkar (${fmtMB(bytes.length)}). Batasnya 50 MB.`);
+      say("busy", `Mengunggah ${title}…`);
+      try {
+        const blob = epub ? new Blob([bytes], { type: "application/json" }) : file;
+        const { filePath } = await cloud.addBook({ kind, title, author, pages, sizeBytes: file.size }, blob, epub ? "application/json" : "application/pdf", cover);
+        remember(filePath, bytes); idb.put(filePath, bytes);
+        await refresh();
+        say("ok", `${title} masuk rak. Buka Rak Baca di perangkat lain, bukunya sudah ada di sana.`);
+      } catch (e) { say("err", uploadMsg(e)); }
+    } finally { uploading = false; $("#file").value = ""; }
+  }
+
+  $("#file").addEventListener("change", (e) => handleFile(e.target.files[0]));
+  const drop = $("#drop");
+  ["dragenter", "dragover"].forEach((t) => document.addEventListener(t, (e) => { if (!$("#reader").hidden) return; e.preventDefault(); drop.hidden = false; }));
+  ["dragleave", "drop"].forEach((t) => document.addEventListener(t, (e) => { e.preventDefault(); if (t === "dragleave" && e.relatedTarget) return; drop.hidden = true; }));
+  document.addEventListener("drop", (e) => { if ($("#reader").hidden && e.dataTransfer?.files?.[0]) handleFile(e.dataTransfer.files[0]); });
+
+  // ---------- reader ----------
+  const stage = $("#stage"), bookEl = $("#book"), cR = $("#cR");
+  let fx = $("#fx");
+  const R = {
+    id: null, book: null, pdf: null, n: 0, page: 1, ar: 0.707,
+    pageW: 0, pageH: 0, pageX: 0, pageY: 0, stageW: 0, stageH: 0, dpr: 1,
+    cache: new Map(), tick: 0, flip: null,
+    savedPage: 0, savedId: null, writing: false, again: false, openedAt: 0, toastFor: 0, wake: null,
+  };
+  const cssVar = (name, fb) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fb;
+  function hexRgb(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex); const v = m ? parseInt(m[1], 16) : 0xF1EFEA;
+    return [(v >> 16 & 255) / 255, (v >> 8 & 255) / 255, (v & 255) / 255];
+  }
+
+  function rload(text, err) {
+    const el = $("#rload");
+    el.hidden = !text; el.textContent = text || "";
+    if (err) el.dataset.err = ""; else delete el.dataset.err;
+  }
+
+  async function fetchWithProgress(url, onp) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const total = +r.headers.get("content-length") || 0;
+    if (!r.body || !total) return new Uint8Array(await r.arrayBuffer());
+    const reader = r.body.getReader(), chunks = []; let got = 0;
+    for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.length; onp(Math.min(99, Math.round((got / total) * 100))); }
+    const out = new Uint8Array(got); let o = 0;
+    for (const c of chunks) { out.set(c, o); o += c.length; }
+    return out;
+  }
+
+  async function openBook(id) {
+    const b = books.get(id) || localBooks.get(id);
+    if (!b) return;
+    const epub = b.kind === "epub";
+    if (!epub && !pdfjs) return say("err", "Pembaca PDF gagal dimuat. Muat ulang halaman ini.");
+    if (R.pdf) { R.pdf.destroy(); R.pdf = null; }
+    Object.assign(R, { id, book: b, kind: epub ? "epub" : "pdf", n: 0, flip: null, openedAt: Date.now(), toastFor: 0, pages: null, epub: null, epubImgs: null });
+    R.cache.clear(); fx.hidden = true; $("#toast").hidden = true;
+    $("#library").hidden = true; $("#reader").hidden = false; $("#reader").classList.remove("calm");
+    $("#rTitle").textContent = b.title;
+    bookEl.style.visibility = "hidden";
+    rload(`Membuka ${b.title}…`);
+    try {
+      const key = b.local ? id : b.fileId;
+      let bytes = memBytes.get(key) || (b.local ? null : await idb.get(key));
+      if (!bytes) {
+        bytes = await fetchWithProgress(await cloud.fileUrl(b), (p) => { if (R.id === id) rload(`Mengambil buku… ${p}%`); });
+        idb.put(key, bytes);
+      }
+      remember(key, bytes);
+      if (R.id !== id) return;
+      if (epub) {
+        const book = JSON.parse(new TextDecoder().decode(bytes));
+        const imgs = new Map();
+        await Promise.all(book.blocks.map(async (blk, i) => {
+          if (blk.t !== "img") return;
+          const im = new Image(); im.src = blk.src;
+          try { await im.decode(); imgs.set(i, im); } catch {}
+        }));
+        await loadBookFonts();
+        if (R.id !== id) return;
+        // For an EPUB the "document" is the typeset book; destroy() keeps it interchangeable with a pdf.js document.
+        R.epub = book; R.epubImgs = imgs; R.pdf = { destroy() {} };
+        layout(true);
+        const pr = getProg(id);
+        R.page = pr?.loc ? pageForLoc(pr.loc) : (pr?.page && pr?.total ? clamp(Math.round((pr.page / pr.total) * R.n), 1, R.n) : 1);
+        R.savedPage = R.page; R.savedId = id;
+        rload(null); renderStatic();
+        bookEl.style.visibility = "";
+        try { R.wake = await navigator.wakeLock?.request("screen"); } catch {}
+        return;
+      }
+      const pdf = await openPdf(bytes);
+      if (R.id !== id) { pdf.destroy(); return; }
+      const vp = (await pdf.getPage(1)).getViewport({ scale: 1 });
+      R.pdf = pdf; R.n = pdf.numPages; R.ar = vp.width / vp.height;
+      R.page = clamp(getProg(id)?.page || 1, 1, R.n);
+      R.savedPage = R.page; R.savedId = id;
+      $("#slider").max = R.n;
+      rload(null); layout(true); renderStatic();
+      bookEl.style.visibility = "";
+      try { R.wake = await navigator.wakeLock?.request("screen"); } catch {}
+    } catch (e) {
+      if (R.id === id) rload(navigator.onLine === false ? "Buku ini belum pernah dibuka di perangkat ini, jadi butuh internet sekali untuk mengunduhnya." : "Buku ini tidak bisa dibuka. Kembali ke rak lalu coba lagi.", true);
+    }
+  }
+
+  function closeReader() {
+    saveProgress();
+    R.id = null; R.flip = null; fx.hidden = true;
+    if (R.pdf) { R.pdf.destroy(); R.pdf = null; }
+    R.cache.clear(); FX.forget();
+    try { R.wake?.release(); } catch {}
+    R.wake = null;
+    $("#reader").hidden = true; $("#library").hidden = false;
+    renderLibrary();
+  }
+
+  // One page, centred on the desk, as large as the screen allows.
+  function layout(force) {
+    if (!R.pdf) return false;
+    const r = stage.getBoundingClientRect();
+    const pad = r.width < 600 ? 10 : 24;
+    const W = Math.max(120, r.width - pad * 2), H = Math.max(120, r.height - pad * 2);
+    if (R.kind === "epub") R.ar = clamp(W / H, 0.56, 0.74); // EPUB pages take the screen's shape
+    let pw = Math.min(W, H * R.ar);
+    const ph = Math.floor(pw / R.ar); pw = Math.floor(pw);
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const sw = Math.round(r.width), sh = Math.round(r.height);
+    if (!force && pw === R.pageW && ph === R.pageH && dpr === R.dpr && sw === R.stageW && sh === R.stageH) return false;
+    Object.assign(R, { pageW: pw, pageH: ph, dpr, stageW: sw, stageH: sh, pageX: Math.round((sw - pw) / 2), pageY: Math.round((sh - ph) / 2) });
+    R.cache.clear(); FX.forget();
+    Object.assign(bookEl.style, { left: R.pageX + "px", top: R.pageY + "px", width: pw + "px", height: ph + "px" });
+    cR.width = pw * dpr; cR.height = ph * dpr;
+    fx.width = sw * dpr; fx.height = sh * dpr;
+    if (R.kind === "epub" && R.epub) {
+      const loc = currentLoc();
+      R.pages = typesetEpub(R.epub, pw, ph);
+      R.n = R.pages.length;
+      R.page = loc ? pageForLoc(loc) : 1;
+      $("#slider").max = R.n;
+    }
+    return true;
+  }
+
+  function getRendered(n) {
+    let e = R.cache.get(n);
+    if (e) { e.used = ++R.tick; return e.promise; }
+    const W = R.pageW * R.dpr, H = R.pageH * R.dpr, pdf = R.pdf;
+    e = { used: ++R.tick, canvas: null };
+    if (R.kind === "epub") {
+      e.canvas = renderEpubPage(n, W, H);
+      e.promise = Promise.resolve(e.canvas);
+      R.cache.set(n, e);
+      return e.promise;
+    }
+    e.promise = pdf.getPage(n).then(async (page) => {
+      const vp1 = page.getViewport({ scale: 1 });
+      const vp = page.getViewport({ scale: Math.min(W / vp1.width, H / vp1.height) });
+      const c = document.createElement("canvas"); c.width = W; c.height = H;
+      const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+      await page.render({ canvasContext: ctx, viewport: vp, transform: [1, 0, 0, 1, (W - vp.width) / 2, (H - vp.height) / 2] }).promise;
+      e.canvas = c; return c;
+    });
+    e.promise.catch(() => { if (R.cache.get(n) === e) R.cache.delete(n); });
+    R.cache.set(n, e);
+    if (R.cache.size > 8) {
+      const old = [...R.cache.entries()].sort((a, b) => a[1].used - b[1].used);
+      for (const [k] of old.slice(0, R.cache.size - 8)) R.cache.delete(k);
+    }
+    return e.promise;
+  }
+
+  function paint(cv, n) {
+    const tok = (cv._tok = (cv._tok || 0) + 1);
+    const ctx = cv.getContext("2d");
+    const e = R.cache.get(n);
+    if (e && e.canvas) { e.used = ++R.tick; ctx.drawImage(e.canvas, 0, 0, cv.width, cv.height); return; }
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+    getRendered(n).then((c) => { if (cv._tok === tok) ctx.drawImage(c, 0, 0, cv.width, cv.height); }).catch(() => {});
+  }
+
+  function renderStatic() {
+    if (!R.pdf) return;
+    paint(cR, R.page);
+    fx.hidden = true;
+    updateUI();
+    for (const n of [R.page + 1, R.page - 1, R.page + 2]) if (n >= 1 && n <= R.n) getRendered(n).catch(() => {});
+  }
+
+  function updateUI() {
+    $("#pageno").textContent = `${R.page} / ${R.n}`;
+    $("#slider").value = R.page;
+    $("#prev").disabled = !canGo(-1);
+    $("#next").disabled = !canGo(1);
+  }
+  const canGo = (dir) => !!R.pdf && (dir > 0 ? R.page < R.n : R.page > 1);
+
+  // ---------- paper curl (WebGL) ----------
+  // The turning sheet wraps around an imaginary cylinder lying on the page. For every screen pixel
+  // the shader finds which part of the sheet is on top there: the flipped-over back, the cylinder
+  // (back on its upper half, front on its lower half), the still-flat front, or the next page below.
+  const FX = (() => {
+    const VS = "attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}";
+    const FS = `precision highp float;
+uniform sampler2D uCur,uNext;uniform vec2 uRes,uOrg,uSize,uO,uDir;uniform float uR;uniform vec3 uBack;
+const float PI=3.14159265;
+bool inP(vec2 q){return q.x>=0.&&q.y>=0.&&q.x<=uSize.x&&q.y<=uSize.y;}
+vec3 tx(sampler2D s,vec2 q){return texture2D(s,q/uSize).rgb;}
+vec3 backOf(vec2 q){return mix(uBack,tx(uCur,q),0.13);}
+void main(){
+  vec2 p=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y)-uOrg;
+  float d=dot(p-uO,uDir);
+  vec2 foot=p-uDir*d;
+  if(d<=0.){
+    vec2 q=foot+uDir*(PI*uR-d);
+    if(inP(q)){float e=smoothstep(0.,uR*1.2,-d);gl_FragColor=vec4(backOf(q)*(0.88+0.1*e),1.);return;}
+  }
+  if(d>=0.&&d<=uR){
+    float th=PI-asin(d/uR);vec2 q=foot+uDir*(uR*th);
+    if(inP(q)){float l=0.7-0.32*cos(th);gl_FragColor=vec4(backOf(q)*clamp(l,0.,1.),1.);return;}
+    th=asin(d/uR);q=foot+uDir*(uR*th);
+    if(inP(q)){float s=sin(th);float l=1.-0.38*s*s*s+0.06*sin(th*2.);gl_FragColor=vec4(tx(uCur,q)*l,1.);return;}
+  }
+  if(d<0.&&inP(p)){float sh=0.22*exp(d/(uR*0.35));gl_FragColor=vec4(tx(uCur,p)*(1.-sh),1.);return;}
+  if(inP(p)){
+    float sh=d>uR?0.4*exp(-(d-uR)/(uR*0.7)):0.4;
+    gl_FragColor=vec4(tx(uNext,p)*(1.-sh),1.);return;
+  }
+  gl_FragColor=vec4(0.);
+}`;
+    let gl = null, ctx2d = null, U = {}, tex = [], texPage = [-1, -1];
+    function initGL() {
+      try {
+        const g = fx.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true });
+        if (!g) return null;
+        const sh = (type, src) => { const s = g.createShader(type); g.shaderSource(s, src); g.compileShader(s); if (!g.getShaderParameter(s, g.COMPILE_STATUS)) throw new Error(g.getShaderInfoLog(s)); return s; };
+        const pr = g.createProgram();
+        g.attachShader(pr, sh(g.VERTEX_SHADER, VS)); g.attachShader(pr, sh(g.FRAGMENT_SHADER, FS)); g.linkProgram(pr);
+        if (!g.getProgramParameter(pr, g.LINK_STATUS)) throw new Error("link");
+        g.useProgram(pr);
+        const buf = g.createBuffer(); g.bindBuffer(g.ARRAY_BUFFER, buf);
+        g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), g.STATIC_DRAW);
+        const a = g.getAttribLocation(pr, "a"); g.enableVertexAttribArray(a); g.vertexAttribPointer(a, 2, g.FLOAT, false, 0, 0);
+        for (const k of ["uCur", "uNext", "uRes", "uOrg", "uSize", "uO", "uDir", "uR", "uBack"]) U[k] = g.getUniformLocation(pr, k);
+        for (let i = 0; i < 2; i++) {
+          const t = g.createTexture(); g.activeTexture(g.TEXTURE0 + i); g.bindTexture(g.TEXTURE_2D, t);
+          g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.LINEAR);
+          g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE);
+          g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, 1, 1, 0, g.RGBA, g.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+          tex.push(t);
+        }
+        g.uniform1i(U.uCur, 0); g.uniform1i(U.uNext, 1);
+        return g;
+      } catch { return null; }
+    }
+    gl = initGL();
+    if (!gl) {
+      // No WebGL here: swap in a fresh canvas and fall back to a plain sliding page.
+      const c = document.createElement("canvas"); c.id = "fx"; c.hidden = true; fx.replaceWith(c); fx = c;
+      ctx2d = fx.getContext("2d");
+    }
+    const src = [null, null];
+    function upload(i, canvas) {
+      src[i] = canvas;
+      if (!gl) return;
+      gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, tex[i]);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    }
+    function setPage(i, n) {
+      if (texPage[i] === n) return;
+      texPage[i] = n;
+      const e = R.cache.get(n);
+      if (e && e.canvas) { upload(i, e.canvas); return; }
+      const blank = document.createElement("canvas"); blank.width = blank.height = 2;
+      const bx = blank.getContext("2d"); bx.fillStyle = "#fff"; bx.fillRect(0, 0, 2, 2); upload(i, blank);
+      getRendered(n).then((c) => { if (texPage[i] === n) { upload(i, c); if (R.flip) draw(R.flip); } }).catch(() => {});
+    }
+    // Geometry: the grab point G on the sheet's free edge lands at F; the fold line sits between them.
+    function geometry(f) {
+      const W = R.pageW, H = R.pageH, Rmax = Math.max(18, W * 0.13);
+      const Gx = W, Gy = f.gy;
+      const Fx = W - f.p * (2 * W + 1.4 * Rmax), Fy = Gy + f.fy;
+      let vx = Gx - Fx, vy = Gy - Fy;
+      const D = Math.hypot(vx, vy);
+      let ang = D > 0.5 ? Math.atan2(vy, vx) : 0;
+      ang = clamp(ang, -0.55, 0.55);
+      const dx = Math.cos(ang), dy = Math.sin(ang);
+      const r = clamp(D / 3, 0.6, Rmax);
+      const k = (D + Math.PI * r) / 2;
+      return { Ox: Gx - dx * k, Oy: Gy - dy * k, dx, dy, r };
+    }
+    function draw(f) {
+      setPage(0, f.curl); setPage(1, f.under);
+      const d = R.dpr;
+      if (gl) {
+        const g = geometry(f);
+        gl.viewport(0, 0, fx.width, fx.height);
+        gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.uniform2f(U.uRes, fx.width, fx.height);
+        gl.uniform2f(U.uOrg, R.pageX * d, R.pageY * d);
+        gl.uniform2f(U.uSize, R.pageW * d, R.pageH * d);
+        gl.uniform2f(U.uO, g.Ox * d, g.Oy * d);
+        gl.uniform2f(U.uDir, g.dx, g.dy);
+        gl.uniform1f(U.uR, g.r * d);
+        gl.uniform3fv(U.uBack, hexRgb(cssVar("--paper-back", "#F1EFEA")));
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      } else {
+        const c = ctx2d, x = R.pageX * d, y = R.pageY * d, w = R.pageW * d, h = R.pageH * d;
+        c.clearRect(0, 0, fx.width, fx.height);
+        if (src[1]) c.drawImage(src[1], x, y, w, h);
+        const off = -f.p * (x + w + 30 * d);
+        c.save(); c.shadowColor = "rgba(0,0,0,.35)"; c.shadowBlur = 24 * d; c.shadowOffsetX = 6 * d;
+        if (src[0]) c.drawImage(src[0], x + off, y, w, h);
+        c.restore();
+      }
+    }
+    return { draw, forget() { texPage = [-1, -1]; } };
+  })();
+
+  // ---------- page turning ----------
+  // A flip curls page `curl` away to reveal `under`. p = 0: curl page lies flat; p = 1: fully turned.
+  // Going forward turns the current page (p 0 -> 1); going back un-turns the previous one (p 1 -> 0).
+  function startFlip(dir, gy) {
+    if (R.flip || !canGo(dir)) return false;
+    R.flip = dir > 0
+      ? { dir, curl: R.page, under: R.page + 1, p: 0, gy, fy: 0, anim: 0, target: R.page + 1 }
+      : { dir, curl: R.page - 1, under: R.page, p: 1, gy, fy: 0, anim: 0, target: R.page - 1 };
+    FX.draw(R.flip); fx.hidden = false;
+    return true;
+  }
+  function animateTo(goal, lift, done) {
+    const f = R.flip; if (!f) return;
+    const p0 = f.p, fy0 = f.fy, t0 = performance.now();
+    const dur = reduced ? 0 : 220 + 620 * Math.abs(goal - p0);
+    const id = ++f.anim;
+    const step = (now) => {
+      if (R.flip !== f || f.anim !== id) return;
+      const k = dur ? Math.min(1, (now - t0) / dur) : 1;
+      const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      f.p = p0 + (goal - p0) * e;
+      f.fy = fy0 * (1 - e) + (lift ? -R.pageH * 0.14 * Math.sin(Math.PI * e) : 0);
+      FX.draw(f);
+      if (k < 1) requestAnimationFrame(step); else done();
+    };
+    requestAnimationFrame(step);
+  }
+  function finishFlip() { const f = R.flip; R.flip = null; R.page = f.target; renderStatic(); saveSoon(); }
+  function cancelFlip() { R.flip = null; renderStatic(); }
+  function go(dir) {
+    if (R.flip) return;
+    if (startFlip(dir, R.pageH * 0.92)) animateTo(dir > 0 ? 1 : 0, true, finishFlip);
+    else nudge();
+  }
+  function nudge() { bookEl.classList.remove("edgehint"); void bookEl.offsetWidth; bookEl.classList.add("edgehint"); }
+  function jump(p) { if (R.flip || !R.pdf) return; R.page = clamp(p, 1, R.n); renderStatic(); saveSoon(); }
+
+  let drag = null;
+  stage.addEventListener("pointerdown", (e) => {
+    if (!R.pdf || R.flip || e.button > 0) return;
+    drag = { x0: e.clientX, y0: e.clientY, started: false, moved: false, samples: [[e.clientX, performance.now()]] };
+    try { stage.setPointerCapture(e.pointerId); } catch {}
+  });
+  stage.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+    drag.samples.push([e.clientX, performance.now()]); if (drag.samples.length > 6) drag.samples.shift();
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) drag.moved = true;
+    if (!drag.started && !drag.blocked && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+      const dir = dx < 0 ? 1 : -1;
+      const sr = stage.getBoundingClientRect();
+      const gy = clamp(drag.y0 - sr.top - R.pageY, R.pageH * 0.06, R.pageH * 0.94);
+      if (startFlip(dir, gy)) { drag.started = true; drag.dir = dir; } else { drag.blocked = true; nudge(); }
+    }
+    if (drag.started && R.flip) {
+      const span = (2 * R.pageW) / 1.5;
+      R.flip.p = clamp(drag.dir > 0 ? -dx / span : 1 - dx / span, 0, 1);
+      R.flip.fy = clamp(dy * 0.9, -R.pageH * 0.5, R.pageH * 0.5);
+      FX.draw(R.flip);
+    }
+  });
+  const endDrag = (e, cancelled) => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (d.started && R.flip) {
+      const [x1, t1] = d.samples[0], v = (e.clientX - x1) / Math.max(1, performance.now() - t1); // px/ms
+      const toward = d.dir > 0 ? -v : v;
+      const done = d.dir > 0 ? R.flip.p : 1 - R.flip.p;
+      const complete = !cancelled && toward > -0.3 && (done > 0.22 || toward > 0.4);
+      const goal = complete === (d.dir > 0) ? 1 : 0;
+      animateTo(goal, false, complete ? finishFlip : cancelFlip);
+    } else if (!d.moved && !cancelled) {
+      const r = stage.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
+      if (x > 0.66) go(1); else if (x < 0.34) go(-1); else $("#reader").classList.toggle("calm");
+    }
+  };
+  stage.addEventListener("pointerup", (e) => endDrag(e, false));
+  stage.addEventListener("pointercancel", (e) => endDrag(e, true));
+
+  $("#prev").addEventListener("click", () => go(-1));
+  $("#next").addEventListener("click", () => go(1));
+  $("#slider").addEventListener("input", (e) => { $("#pageno").textContent = `${e.target.value} / ${R.n}`; });
+  $("#slider").addEventListener("change", (e) => jump(+e.target.value));
+  $("#back").addEventListener("click", closeReader);
+  document.addEventListener("keydown", (e) => {
+    if ($("#reader").hidden || e.target.tagName === "INPUT") return;
+    if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); go(1); }
+    else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); go(-1); }
+    else if (e.key === "Escape") closeReader();
+  });
+  let rsz;
+  window.addEventListener("resize", () => {
+    clearTimeout(rsz);
+    rsz = setTimeout(() => { if (R.pdf && !R.flip && layout(false)) renderStatic(); }, 120);
+  });
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "hidden") saveProgress();
+    else if (R.pdf && !R.wake) { try { R.wake = await navigator.wakeLock?.request("screen"); } catch {} }
+  });
+
+  // ---------- reading progress ----------
+  let saveTimer;
+  function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveProgress, 800); }
+  async function saveProgress() {
+    clearTimeout(saveTimer);
+    if (!R.id || !R.n) return;
+    const id = R.id, body = { page: R.page, total: R.n, updatedAt: Date.now(), device: DEVICE, session: SESSION };
+    const loc = R.kind === "epub" ? currentLoc() : null;
+    if (loc) body.loc = { b: loc.b, w: loc.w };
+    if (R.savedId === id && R.savedPage === body.page) return;
+    lsSet("prog:" + id, body);
+    if (!db || !uid || R.book?.local) { R.savedPage = body.page; R.savedId = id; return; }
+    if (R.writing) { R.again = true; return; }
+    R.writing = true;
+    try { await cloud.saveProgress(id, body); R.savedPage = body.page; R.savedId = id; setSync("ok"); }
+    catch { setSync("err"); }
+    finally {
+      R.writing = false;
+      if (R.again) { R.again = false; if (R.id === id && R.page !== R.savedPage) saveProgress(); }
+    }
+  }
+  // Another device moved ahead while this one is open: offer to jump there.
+  function checkRemote() {
+    if (!R.pdf || !R.id) return;
+    const pr = progress.get(R.id);
+    if (!pr || pr.session === SESSION || pr.updatedAt <= R.openedAt || R.toastFor === pr.updatedAt) return;
+    const epub = R.kind === "epub";
+    const target = epub ? (pr.loc ? pageForLoc(pr.loc) : clamp(Math.round((pr.page / (pr.total || 1)) * R.n), 1, R.n)) : pr.page;
+    if (target === R.page) return;
+    R.toastFor = pr.updatedAt;
+    const t = $("#toast");
+    const where = epub ? `${Math.round((pr.page / (pr.total || 1)) * 100)}%` : `hal. ${pr.page}`;
+    $("#toastText").textContent = `Di ${pr.device || "perangkat lain"} kamu sudah sampai ${where}.`;
+    $("#toastBtn").textContent = "Lompat ke sana";
+    $("#toastBtn").onclick = () => { t.hidden = true; jump(target); };
+    t.hidden = false;
+    clearTimeout(t._h); t._h = setTimeout(() => { t.hidden = true; }, 9000);
+  }
+  // Android back button (APK): close the reader or the book panel first, then leave the app.
+  const capApp = window.Capacitor?.Plugins?.App;
+  if (capApp) capApp.addListener("backButton", () => {
+    if (!$("#reader").hidden) closeReader();
+    else if (scene.sel) closeSheet();
+    else capApp.exitApp();
+  });
+  // In a browser, cache the app itself so it opens offline and can be installed to the home screen.
+  if ("serviceWorker" in navigator && !window.Capacitor?.isNativePlatform?.() && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>

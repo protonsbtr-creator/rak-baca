@@ -1,0 +1,72 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install
+        run: npm ci
+
+      - name: Create the Android project
+        run: npm run android:prepare
+
+      - name: Build
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > ks.p12
+          else
+            # No signing key stored yet: sign with a throwaway key. Each build then needs a reinstall to update.
+            echo "::warning::KEYSTORE_B64 secret is missing; using a temporary signing key."
+            keytool -genkeypair -keystore ks.p12 -storetype PKCS12 -alias rakbaca -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass temporary -keypass temporary -dname "CN=Rak Baca"
+            export KEYSTORE_PASSWORD=temporary
+          fi
+          "$BT/zipalign" -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          "$BT/apksigner" sign --ks ks.p12 --ks-type PKCS12 --ks-pass env:KEYSTORE_PASSWORD --out RakBaca.apk aligned.apk
+          rm -f ks.p12
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RakBaca-apk
+          path: RakBaca.apk
+
+      - name: Publish to Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Rak Baca (build ${{ github.run_number }})
+          body: Unduh RakBaca.apk di bawah, lalu buka di HP Android untuk menginstal.
+          files: RakBaca.apk
+          make_latest: true
