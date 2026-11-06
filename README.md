@@ -11,6 +11,8 @@ Pembaca PDF dan EPUB dengan rak buku 3D yang melayang di perpustakaan putih, hal
 | Path | Isi |
 |---|---|
 | `web/` | Aplikasinya (satu `index.html`), `config.js`, manifest, service worker, ikon |
+| `dict/` | Kamus Inggris untuk popup arti kata, hasil olahan Open English WordNet (lihat `dict/NOTICE.md`). Ikut ke website, tidak masuk APK |
+| `scripts/build-dict.mjs` | Membuat ulang `dict/` dari rilis WordNet |
 | `supabase/setup.sql` | Tabel, bucket file, dan aturan akses. Jalankan sekali di Supabase |
 | `assets/` | Ikon dan splash untuk APK |
 | `.github/workflows/build-apk.yml` | Build APK otomatis setiap ada push ke `main` |

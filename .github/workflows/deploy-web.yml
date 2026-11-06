@@ -28,6 +28,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run vendor
+      - run: cp -r dict web/dict # only on the website, so it never adds to the APK
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

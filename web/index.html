@@ -179,6 +179,18 @@ button, input, label { font: inherit; color: inherit; }
 .zoomval:hover { background: var(--desk-hover); }
 #stage.zoomed { cursor: move; }
 #book { transform-origin: 0 0; }
+#wordMark { position: absolute; border-radius: 3px; background: rgba(240, 190, 60, .4); pointer-events: none; }
+.wordbox { position: absolute; z-index: 5; width: min(340px, calc(100vw - 24px)); max-height: min(46vh, 380px); overflow: auto; padding: 14px 16px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 48px rgba(0, 0, 0, .25); animation: rise .2s cubic-bezier(.2, .8, .2, 1); }
+.wordbox .close { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border: 0; border-radius: 50%; background: transparent; color: var(--faint); cursor: pointer; font-size: 18px; line-height: 1; }
+.wordbox .close:hover { background: var(--surface); color: var(--ink); }
+.wb-word { margin: 0; padding-right: 26px; font-weight: 600; font-size: 17px; overflow-wrap: anywhere; }
+.wb-from { margin: 1px 0 0; font-size: 12.5px; color: var(--muted); }
+.wb-list + .wb-from { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); font-weight: 500; color: var(--ink); }
+.wb-pos { margin: 12px 0 4px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.wb-list { margin: 0; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 7px; font-size: 13.5px; line-height: 1.45; }
+.wb-ex { display: block; margin-top: 2px; color: var(--muted); font-style: italic; font-size: 12.5px; }
+.wb-note { margin: 8px 0 0; padding-right: 26px; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+.wb-note:first-child { margin-top: 0; }
 .pageno { font-family: var(--f-mono); font-size: 12.5px; color: var(--desk-muted); font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 7ch; text-align: right; }
 #slider { flex: 1; min-width: 0; accent-color: var(--desk-ink); height: 28px; }
 
@@ -200,7 +212,7 @@ button, input, label { font: inherit; color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .rbar, .btn { transition: none; }
-  .sheet-card, .auth-dialog[open], .fab-menu { animation: none; }
+  .sheet-card, .auth-dialog[open], .fab-menu, .wordbox { animation: none; }
 }
 
 /* ---------- weightless scene ---------- */
@@ -217,6 +229,8 @@ button, input, label { font: inherit; color: inherit; }
 #space .b3 .body { transform: none; transition: none; }
 .b3 .cap { position: absolute; left: 50%; top: calc(100% + 16px); transform: translateX(-50%); max-width: 170px; padding: 2px 8px; border-radius: 8px; background: var(--bg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--ink); opacity: 0; transition: opacity .2s; pointer-events: none; }
 .b3:hover .cap { opacity: 1; }
+.credit { margin-top: 0; border-top: 0; padding-top: 2px; color: var(--faint); }
+.credit a { color: inherit; }
 .gesture { margin: 8px 0 0; padding: 8px 8px 0; border-top: 1px solid var(--line); font-size: 12px; line-height: 1.45; color: var(--muted); }
 
 .sheet { position: fixed; inset: 0; z-index: 15; display: flex; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
@@ -259,6 +273,7 @@ button, input, label { font: inherit; color: inherit; }
       <div class="rooms" id="rooms"></div>
     </div>
     <p class="gesture" id="gesture"></p>
+    <p class="gesture credit">Arti kata dari <a href="https://github.com/globalwordnet/english-wordnet" target="_blank" rel="noopener">Open English WordNet</a> (CC BY 4.0), turunan <a href="https://wordnet.princeton.edu/" target="_blank" rel="noopener">Princeton WordNet</a>.</p>
   </div>
   <dialog id="authDialog" class="auth-dialog" aria-labelledby="authTitle">
     <form id="auth" class="auth">
@@ -319,7 +334,7 @@ button, input, label { font: inherit; color: inherit; }
     </div>
   </div>
   <div id="stage">
-    <div id="book"><canvas id="cR"></canvas></div>
+    <div id="book"><canvas id="cR"></canvas><div id="wordMark" hidden></div></div>
     <canvas id="fx" hidden></canvas>
     <div class="rload" id="rload" hidden></div>
   </div>
@@ -328,6 +343,10 @@ button, input, label { font: inherit; color: inherit; }
     <input type="range" id="slider" min="1" max="1" value="1" aria-label="Pindah ke halaman">
     <span class="pageno" id="pageno">–</span>
     <button class="ibtn" id="next" aria-label="Halaman berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <div class="wordbox" id="wordbox" role="dialog" aria-label="Arti kata" hidden>
+    <div id="wbBody"></div>
+    <button class="close" id="wbClose" aria-label="Tutup">×</button>
   </div>
   <div class="toast" id="toast" hidden><span id="toastText"></span><button class="btn primary" id="toastBtn"></button></div>
 </div>
@@ -592,8 +611,8 @@ button, input, label { font: inherit; color: inherit; }
     allBooks = all;
     scene.room = clamp(scene.room, 0, roomCount() - 1);
     $("#gesture").textContent = coarse
-      ? "Swipe atas-bawah untuk jalan, kiri-kanan untuk nengok. Ketuk buku untuk membuka, geser untuk memindah, cubit dua jari untuk mendekat atau menjauh."
-      : "Scroll atau tombol panah untuk jalan, seret ruang kosong untuk nengok. Klik buku untuk membuka, seret untuk memindah.";
+      ? "Swipe atas-bawah untuk jalan, kiri-kanan untuk nengok. Ketuk buku untuk membuka, geser untuk memindah, cubit dua jari untuk mendekat atau menjauh. Saat membaca buku Inggris, tahan satu kata untuk melihat artinya."
+      : "Scroll atau tombol panah untuk jalan, seret ruang kosong untuk nengok. Klik buku untuk membuka, seret untuk memindah. Saat membaca buku Inggris, klik dua kali satu kata untuk melihat artinya.";
     syncScene(all.slice(scene.room * PER_ROOM, (scene.room + 1) * PER_ROOM));
     renderRooms();
     $("#loadingShelf").hidden = libReady || all.length > 0;
@@ -1403,7 +1422,7 @@ button, input, label { font: inherit; color: inherit; }
         const base = y + (lineH - size) / 2 + size * 0.8;
         line.forEach((t, k) => {
           if (k && t.sp) x += spaceW + extra;
-          page.ops.push({ k: "t", x, y: base, s: t.s, f: t.f });
+          page.ops.push({ k: "t", x, y: base, s: t.s, f: t.f, w: t.w, h: size });
           x += t.w;
         });
         y += lineH; first = false; line = []; lw = 0;
@@ -1564,7 +1583,7 @@ button, input, label { font: inherit; color: inherit; }
     if (R.pdf) { R.pdf.destroy(); R.pdf = null; }
     Object.assign(R, { id, book: b, kind: epub ? "epub" : "pdf", n: 0, flip: null, openedAt: Date.now(), toastFor: 0, pages: null, epub: null, epubImgs: null, zoom: 1, panX: 0, panY: 0 });
     setZoomLabels();
-    R.cache.clear(); fx.hidden = true; $("#toast").hidden = true;
+    R.cache.clear(); pdfLines.clear(); closeWord(); fx.hidden = true; $("#toast").hidden = true;
     $("#library").hidden = true; $("#reader").hidden = false; $("#reader").classList.remove("calm");
     $("#rTitle").textContent = b.title;
     bookEl.style.visibility = "hidden";
@@ -1617,6 +1636,7 @@ button, input, label { font: inherit; color: inherit; }
 
   function closeReader() {
     saveProgress();
+    closeWord();
     R.id = null; R.flip = null; fx.hidden = true;
     if (R.pdf) { R.pdf.destroy(); R.pdf = null; }
     R.cache.clear(); FX.forget();
@@ -1639,7 +1659,7 @@ button, input, label { font: inherit; color: inherit; }
     const sw = Math.round(r.width), sh = Math.round(r.height);
     if (!force && pw === R.pageW && ph === R.pageH && dpr === R.dpr && sw === R.stageW && sh === R.stageH) return false;
     Object.assign(R, { pageW: pw, pageH: ph, dpr, stageW: sw, stageH: sh, pageX: Math.round((sw - pw) / 2), pageY: Math.round((sh - ph) / 2) });
-    R.cache.clear(); FX.forget();
+    R.cache.clear(); FX.forget(); closeWord();
     Object.assign(bookEl.style, { left: R.pageX + "px", top: R.pageY + "px", width: pw + "px", height: ph + "px" });
     cR.width = pw * dpr; cR.height = ph * dpr;
     fx.width = sw * dpr; fx.height = sh * dpr;
@@ -1940,11 +1960,188 @@ void main(){
     }
   }, { passive: false });
 
+  // ---------- word box ----------
+  // Hold a word (phone) or double-click it (laptop) to see what it means. Definitions are one small file per
+  // first two letters, fetched the first time they're needed and then kept for offline use.
+  const dictFiles = new Map(), POS_NAMES = { n: "kata benda", v: "kata kerja", a: "kata sifat", r: "kata keterangan" };
+  const dictKey = (w) => (w + "_").slice(0, 2).replace(/[^a-z]/g, "_");
+  async function dictFile(key) {
+    if (dictFiles.has(key)) return dictFiles.get(key);
+    let data = await idb.get("dict1:" + key);
+    if (!data) {
+      const r = await fetch((CFG.dictUrl || "dict/") + key + ".json");
+      if (r.status === 404) data = {}; // no English word starts with these letters
+      else if (!r.ok) throw new Error("HTTP " + r.status);
+      else { data = await r.json(); idb.put("dict1:" + key, data); }
+    }
+    dictFiles.set(key, data);
+    return data;
+  }
+  const IRREGULAR = { "won't": "will", "can't": "can", "shan't": "shall", women: "woman", men: "man" };
+  // A word's possible dictionary forms, most likely first: "running" -> running, run, runne...
+  function wordForms(word) {
+    const out = [IRREGULAR[word], word.replace(/(n't|'s|'ll|'re|'ve|'d|'m|s')$/, ""), word];
+    const w = out[1] || word;
+    const add = (re, ...to) => { if (re.test(w)) for (const t of to) out.push(w.replace(re, t)); };
+    add(/ies$/, "y"); add(/ied$/, "y"); add(/ier$/, "y"); add(/iest$/, "y"); add(/ily$/, "y");
+    add(/(s|x|z|ch|sh|o)es$/, "$1"); if (w.length > 3) add(/s$/, "");
+    add(/([^aeiou])\1(ing|ed|er|est)$/, "$1"); // running, stopped, bigger
+    // One vowel then one consonant usually hides an e: hoping is hope, not hop. Otherwise the stem stands alone: jumping.
+    const hidesE = /[^aeiou][aeiou][^aeiouwxy](ing|ed)$/.test(w);
+    add(/ing$/, ...(hidesE ? ["e", ""] : ["", "e"])); add(/ed$/, ...(hidesE ? ["e", ""] : ["", "e"]));
+    add(/er$/, "", "e"); add(/est$/, "", "e"); add(/ly$/, "");
+    const seen = new Set();
+    return out.filter((f) => f && f.length > 0 && !seen.has(f) && seen.add(f));
+  }
+  async function entryOf(form) {
+    let v = (await dictFile(dictKey(form)))[form], lemma = form;
+    if (typeof v === "string") { lemma = v; v = (await dictFile(dictKey(lemma)))[lemma]; }
+    return Array.isArray(v) ? { lemma, rows: v } : null;
+  }
+  // Up to two entries. "studied" is its own adjective but the reader probably wants "study", so when a word is
+  // also a form of another one, both are shown; an adjective gives way to the word it comes from.
+  async function lookUp(word) {
+    const forms = wordForms(word);
+    let main = null;
+    for (const f of forms) if ((main = await entryOf(f))) break;
+    if (!main) return [];
+    // "studied" can only be the verb "study", so its verb senses come before the noun ones.
+    const verbsFirst = (e) => (e && e.lemma !== word && /(ed|ing)$/.test(word) ? { lemma: e.lemma, rows: [...e.rows.filter((r) => r[0] === "v"), ...e.rows.filter((r) => r[0] !== "v")] } : e);
+    main = verbsFirst(main);
+    let other = null;
+    const alt = (await dictFile(dictKey(word)))["=" + word];
+    if (alt && alt !== main.lemma) other = verbsFirst(await entryOf(alt));
+    else if (main.lemma === word && /(ing|[^e]ed)$/.test(word)) {
+      for (const f of forms) {
+        if (f === word || f.length < 3) continue;
+        const e = await entryOf(f);
+        if (e && e.lemma !== main.lemma) { other = verbsFirst(e); break; }
+      }
+    }
+    if (!other) return [main];
+    return main.rows[0][0] === "a" ? [other, main] : [main, other];
+  }
+
+  // The word inside a run of text, given how far into the run the finger landed.
+  function splitWord(str, offset, widthOf) {
+    for (const m of str.matchAll(/\p{L}[\p{L}\p{M}'’-]*/gu)) {
+      const left = widthOf(str.slice(0, m.index)), right = widthOf(str.slice(0, m.index + m[0].length));
+      if (offset >= left - 1 && offset <= right + 1) return { text: m[0], left, right };
+    }
+    return null;
+  }
+  const wordCanvas = document.createElement("canvas").getContext("2d");
+  function epubWordAt(px, py) {
+    for (const op of R.pages?.[R.page - 1]?.ops || []) {
+      if (op.k !== "t" || px < op.x - 2 || px > op.x + op.w + 2 || py < op.y - op.h * 0.9 || py > op.y + op.h * 0.32) continue;
+      wordCanvas.font = op.f;
+      const hit = splitWord(op.s, px - op.x, (t) => wordCanvas.measureText(t).width);
+      return hit ? { text: hit.text, x: op.x + hit.left, y: op.y - op.h * 0.85, w: hit.right - hit.left, h: op.h * 1.12 } : null;
+    }
+    return null;
+  }
+  // pdf.js hands back runs of text that can stop mid-word; glue the touching ones so a word stays whole.
+  const pdfLines = new Map();
+  async function pdfText(n) {
+    if (pdfLines.has(n)) return pdfLines.get(n);
+    const page = await R.pdf.getPage(n), vp = page.getViewport({ scale: 1 });
+    const runs = [];
+    for (const item of (await page.getTextContent()).items) {
+      if (!item.str?.trim()) continue;
+      const t = pdfjs.Util.transform(vp.transform, item.transform), h = Math.hypot(t[2], t[3]) || 1;
+      if (Math.abs(t[1]) > h * 0.01) continue; // sideways text
+      const last = runs[runs.length - 1], gap = last ? t[4] - (last.x + last.w) : 0;
+      if (last && Math.abs(last.y - t[5]) < h * 0.2 && gap > -h * 0.2 && gap < h * 0.15 && !/\s$/.test(last.str)) { last.str += item.str; last.w = t[4] + item.width - last.x; }
+      else runs.push({ str: item.str, x: t[4], y: t[5], w: item.width, h });
+    }
+    const out = { runs, pw: vp.width, ph: vp.height };
+    pdfLines.set(n, out);
+    if (pdfLines.size > 6) pdfLines.delete(pdfLines.keys().next().value);
+    return out;
+  }
+  async function pdfWordAt(px, py) {
+    const { runs, pw, ph } = await pdfText(R.page);
+    if (!runs.length) return { scanned: true };
+    const s = Math.min(R.pageW / pw, R.pageH / ph), ox = (R.pageW - pw * s) / 2, oy = (R.pageH - ph * s) / 2;
+    const vx = (px - ox) / s, vy = (py - oy) / s;
+    for (const r of runs) {
+      if (vx < r.x - 1 || vx > r.x + r.w + 1 || vy < r.y - r.h * 0.9 || vy > r.y + r.h * 0.32) continue;
+      wordCanvas.font = `${r.h}px Helvetica, Arial, sans-serif`;
+      const k = r.w / (wordCanvas.measureText(r.str).width || 1); // fit our font's widths to the page's
+      const hit = splitWord(r.str, vx - r.x, (t) => wordCanvas.measureText(t).width * k);
+      return hit ? { text: hit.text, x: ox + (r.x + hit.left) * s, y: oy + (r.y - r.h * 0.85) * s, w: (hit.right - hit.left) * s, h: r.h * 1.12 * s } : null;
+    }
+    return null;
+  }
+
+  let wordTok = 0;
+  function closeWord() {
+    wordTok++;
+    $("#wordbox").hidden = true; $("#wordMark").hidden = true;
+  }
+  function placeWordbox(cx, cy, below, above) {
+    const box = $("#wordbox"), w = box.offsetWidth, h = box.offsetHeight, m = 12;
+    const top = below + 8 + h <= innerHeight - m ? below + 8 : above - 8 - h >= m ? above - 8 - h : Math.max(m, innerHeight - m - h);
+    box.style.left = clamp(cx - w / 2, m, innerWidth - m - w) + "px";
+    box.style.top = top + "px";
+  }
+  function fillWordbox(kids, cx, cy, below, above) {
+    $("#wbBody").replaceChildren(...kids);
+    $("#wordbox").hidden = false;
+    placeWordbox(cx, cy, below, above);
+  }
+  async function showWordAt(cx, cy) {
+    const tok = ++wordTok;
+    const sr = stage.getBoundingClientRect();
+    const px = (cx - sr.left - R.pageX - R.panX) / R.zoom, py = (cy - sr.top - R.pageY - R.panY) / R.zoom;
+    const note = (text) => fillWordbox([h("p", { class: "wb-note", text })], cx, cy, cy + 12, cy - 12);
+    let hit;
+    try { hit = R.kind === "epub" ? epubWordAt(px, py) : await pdfWordAt(px, py); }
+    catch { if (tok === wordTok) note("Teks halaman ini tidak bisa dibaca."); return; }
+    if (tok !== wordTok) return;
+    if (hit?.scanned) return note("Halaman ini berupa gambar hasil scan, jadi katanya tidak bisa dipilih.");
+    if (!hit) return; // the finger landed on empty paper or a picture
+    const word = hit.text.normalize("NFD").replace(/\p{M}/gu, "").replace(/’/g, "'").toLowerCase().replace(/^['-]+|['-]+$/g, "");
+    if (!word) return;
+    const mark = $("#wordMark");
+    Object.assign(mark.style, { left: hit.x + "px", top: hit.y + "px", width: hit.w + "px", height: hit.h + "px" });
+    mark.hidden = false;
+    const mr = mark.getBoundingClientRect(), mx = mr.left + mr.width / 2;
+    const title = h("p", { class: "wb-word", text: hit.text.replace(/^['’-]+|['’-]+$/g, "") });
+    fillWordbox([title, h("p", { class: "wb-note", text: "Mencari arti…" })], mx, cy, mr.bottom, mr.top);
+    let found;
+    try { found = await lookUp(word); }
+    catch {
+      if (tok === wordTok) fillWordbox([title, h("p", { class: "wb-note", text: "Kata ini butuh internet sekali untuk mengambil artinya. Coba lagi saat tersambung." })], mx, cy, mr.bottom, mr.top);
+      return;
+    }
+    if (tok !== wordTok) return;
+    if (!found.length) return fillWordbox([title, h("p", { class: "wb-note", text: "Tidak ada di kamus. Kamus ini berbahasa Inggris dan jarang memuat nama orang atau kata gaul." })], mx, cy, mr.bottom, mr.top);
+    const kids = [title];
+    for (const { lemma, rows } of found) {
+      if (lemma !== word) kids.push(h("p", { class: "wb-from", text: "bentuk dari " + lemma }));
+      else if (found.length > 1) kids.push(h("p", { class: "wb-from", text: word }));
+      let list = null, pos = null;
+      for (const [p, def, ex] of rows) {
+        if (p !== pos) { pos = p; list = h("ol", { class: "wb-list" }); kids.push(h("p", { class: "wb-pos", text: POS_NAMES[p] || p }), list); }
+        const li = h("li", { text: def });
+        if (ex) li.append(h("span", { class: "wb-ex", text: ex }));
+        list.append(li);
+      }
+    }
+    fillWordbox(kids, mx, cy, mr.bottom, mr.top);
+    $("#wordbox").scrollTop = 0;
+  }
+  $("#wbClose").addEventListener("click", closeWord);
+  document.addEventListener("pointerdown", (e) => { if (!e.opensWord && !$("#wordbox").hidden && !e.target.closest("#wordbox")) closeWord(); }); // the press that opens the box also ends up here
+  stage.addEventListener("contextmenu", (e) => e.preventDefault()); // holding a word shouldn't open the browser's menu
+
   // ---------- page turning ----------
   // A flip curls page `curl` away to reveal `under`. p = 0: curl page lies flat; p = 1: fully turned.
   // Going forward turns the current page (p 0 -> 1); going back un-turns the previous one (p 1 -> 0).
   function startFlip(dir, gy) {
     if (R.flip || !canGo(dir)) return false;
+    closeWord();
     R.flip = dir > 0
       ? { dir, curl: R.page, under: R.page + 1, p: 0, gy, fy: 0, anim: 0, target: R.page + 1 }
       : { dir, curl: R.page - 1, under: R.page, p: 1, gy, fy: 0, anim: 0, target: R.page - 1 };
@@ -1972,16 +2169,17 @@ void main(){
   function go(dir) {
     if (R.flip) return;
     if (R.zoom > 1) {
-      if (canGo(dir)) { R.page += dir; R.panY = 0; applyZoom(); renderStatic(); saveSoon(); }
+      if (canGo(dir)) { closeWord(); R.page += dir; R.panY = 0; applyZoom(); renderStatic(); saveSoon(); }
       return;
     }
     if (startFlip(dir, R.pageH * 0.92)) animateTo(dir > 0 ? 1 : 0, true, finishFlip);
     else nudge();
   }
   function nudge() { bookEl.classList.remove("edgehint"); void bookEl.offsetWidth; bookEl.classList.add("edgehint"); }
-  function jump(p) { if (R.flip || !R.pdf) return; R.page = clamp(p, 1, R.n); renderStatic(); saveSoon(); }
+  function jump(p) { if (R.flip || !R.pdf) return; closeWord(); R.page = clamp(p, 1, R.n); renderStatic(); saveSoon(); }
 
-  let drag = null, pinchR = null;
+  const HOLD_MS = 480, DOUBLE_CLICK_MS = 230;
+  let drag = null, pinchR = null, pendingTap = null;
   const fingers = new Map();
   const fingerSpread = () => {
     const [a, b] = [...fingers.values()], r = stage.getBoundingClientRect();
@@ -1989,17 +2187,33 @@ void main(){
   };
   stage.addEventListener("pointerdown", (e) => {
     if (!R.pdf || e.button > 0) return;
+    if (!$("#wordbox").hidden) return; // this press only closes the box (handled on document)
+    if (pendingTap && e.pointerType === "mouse") {
+      const near = Math.hypot(e.clientX - pendingTap.x, e.clientY - pendingTap.y) < 8;
+      clearTimeout(pendingTap.timer);
+      const tap = pendingTap; pendingTap = null;
+      if (near) { e.opensWord = true; showWordAt(e.clientX, e.clientY); return; }
+      tap.run();
+    }
     fingers.set(e.pointerId, [e.clientX, e.clientY]);
     try { stage.setPointerCapture(e.pointerId); } catch {}
     if (fingers.size === 2) {
       // A second finger turns whatever the first one started into a pinch.
       if (drag?.started && R.flip) cancelFlip();
+      clearTimeout(drag?.hold);
       drag = null;
       if (!R.flip) pinchR = { d0: fingerSpread().d, zoom0: R.zoom, ratio: 1 };
       return;
     }
     if (R.flip || fingers.size > 2) return;
     drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, pan: R.zoom > 1, started: false, moved: false, samples: [[e.clientX, performance.now()]] };
+    const held = drag;
+    drag.hold = setTimeout(() => {
+      if (drag !== held || held.moved || held.started || pinchR) return;
+      drag = null;
+      if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(12); // browsers refuse it before the first tap
+      showWordAt(held.x0, held.y0);
+    }, HOLD_MS);
   });
   stage.addEventListener("pointermove", (e) => {
     if (fingers.has(e.pointerId)) fingers.set(e.pointerId, [e.clientX, e.clientY]);
@@ -2050,6 +2264,7 @@ void main(){
     }
     if (!drag) return;
     const d = drag; drag = null;
+    clearTimeout(d.hold);
     if (d.started && R.flip) {
       const [x1, t1] = d.samples[0], v = (e.clientX - x1) / Math.max(1, performance.now() - t1); // px/ms
       const toward = d.dir > 0 ? -v : v;
@@ -2059,7 +2274,10 @@ void main(){
       animateTo(goal, false, complete ? finishFlip : cancelFlip);
     } else if (!d.moved && !cancelled) {
       const r = stage.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
-      if (x > 0.66) go(1); else if (x < 0.34) go(-1); else $("#reader").classList.toggle("calm");
+      const run = () => { if (x > 0.66) go(1); else if (x < 0.34) go(-1); else $("#reader").classList.toggle("calm"); };
+      // A mouse click waits a moment in case it's the first half of a double-click on a word.
+      if (e.pointerType === "mouse") pendingTap = { x: e.clientX, y: e.clientY, run, timer: setTimeout(() => { pendingTap = null; run(); }, DOUBLE_CLICK_MS) };
+      else run();
     }
   };
   stage.addEventListener("pointerup", (e) => endDrag(e, false));
@@ -2074,7 +2292,7 @@ void main(){
     if ($("#reader").hidden || e.target.tagName === "INPUT") return;
     if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); go(1); }
     else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); go(-1); }
-    else if (e.key === "Escape") closeReader();
+    else if (e.key === "Escape") { if (!$("#wordbox").hidden) closeWord(); else closeReader(); }
     else if (!e.ctrlKey && !e.metaKey && !e.altKey) {
       if (e.key === "+" || e.key === "=") zoomStep(1);
       else if (e.key === "-") zoomStep(-1);
@@ -2132,7 +2350,8 @@ void main(){
   // Android back button (APK): close the reader or the book panel first, then leave the app.
   const capApp = window.Capacitor?.Plugins?.App;
   if (capApp) capApp.addListener("backButton", () => {
-    if (!$("#reader").hidden) closeReader();
+    if (!$("#wordbox").hidden) closeWord();
+    else if (!$("#reader").hidden) closeReader();
     else if (scene.sel) closeSheet();
     else capApp.exitApp();
   });

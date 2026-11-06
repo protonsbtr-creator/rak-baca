@@ -1,6 +1,7 @@
 node_modules/
 android/
 web/vendor/
+web/dict/
 keystore/
 *.apk
 *.p12

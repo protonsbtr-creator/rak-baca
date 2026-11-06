@@ -5,6 +5,7 @@
   "description": "Rak Baca: PDF and EPUB reader that syncs your place between phone and laptop.",
   "scripts": {
     "vendor": "node scripts/vendor.mjs",
+    "dict": "node scripts/build-dict.mjs",
     "serve": "npx --yes http-server web -p 5173 -c-1",
     "android:prepare": "npm run vendor && npx cap add android && npx capacitor-assets generate --android && npx cap sync android"
   },
