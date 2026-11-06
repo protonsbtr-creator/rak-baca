@@ -1,0 +1,23 @@
+{
+  "name": "rak-baca",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rak Baca: PDF and EPUB reader that syncs your place between phone and laptop.",
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "serve": "npx --yes http-server web -p 5173 -c-1",
+    "android:prepare": "npm run vendor && npx cap add android && npx capacitor-assets generate --android && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "6.1.2",
+    "@capacitor/app": "6.0.1",
+    "@capacitor/core": "6.1.2",
+    "@supabase/supabase-js": "2.45.4",
+    "jszip": "3.10.1",
+    "pdfjs-dist": "3.11.174"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "6.1.2"
+  }
+}

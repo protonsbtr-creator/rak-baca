@@ -1,0 +1,11 @@
+{
+  "appId": "com.rakbaca.app",
+  "appName": "Rak Baca",
+  "webDir": "web",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
